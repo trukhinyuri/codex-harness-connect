@@ -1,6 +1,6 @@
 {
   "name": "codex-harness-connect",
-  "version": "0.1.0-alpha.6",
+  "version": "0.1.0-alpha.8",
   "description": "Research and connect local agent CLIs with explicit capability and policy evidence.",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",

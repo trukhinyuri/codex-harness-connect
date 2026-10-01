@@ -9,6 +9,7 @@ from mcp.types import ToolAnnotations
 from pydantic import Field
 
 from .adapters import ADAPTERS, get_adapter, launch_contract
+from .auth import observe_auth
 from .discovery import inventory
 from .elicitation import check_interaction as run_interaction_check
 from .history import list_history
@@ -61,7 +62,8 @@ def build_server(state_root: Path, profile: str | None = None) -> FastMCP:
     @server.tool(annotations=READ)
     def inventory_cli(adapter: str) -> dict:
         """Probe a registered trusted CLI's --version/--help. No authentication or model call."""
-        return inventory(get_adapter(selected(adapter)).executable)
+        item = get_adapter(selected(adapter))
+        return inventory(item.executable, help_transport=item.help_transport)
 
     @server.tool(annotations=WRITE)
     def revalidate_cli(adapter: str) -> dict:
@@ -82,6 +84,20 @@ def build_server(state_root: Path, profile: str | None = None) -> FastMCP:
             """
             return inventory(executable)
 
+    if profile in (None, "claude"):
+        @server.tool(annotations=READ)
+        def auth_status(adapter: str, cwd: str, expected_sha256: str) -> dict:
+            """Sanitized Claude auth status in this server's environment/workspace; no model.
+
+            Only the reviewed native CLI handles its auth internals. Returns no account identifier,
+            credentials, configuration directory or raw stderr. Subscription-route observation
+            does not establish included quota, usage-credit state or future billing. This call
+            does not persist the observation; the Codex host may retain it in chat history.
+            """
+            if selected(adapter) != "claude":
+                raise ValueError("Native auth observation is reviewed for Claude only")
+            return observe_auth(get_adapter(adapter).executable, cwd, expected_sha256)
+
     @server.tool(annotations=WRITE)
     def start_session(adapter: str, prompt: str, cwd: str, expected_sha256: str, request_id: str,
                       mode: str = "interactive", native_options: list[str] | None = None,
@@ -98,7 +114,7 @@ def build_server(state_root: Path, profile: str | None = None) -> FastMCP:
                                    batch_workspace_confirmation=batch_workspace_confirmation)
         job = pools[adapter].start(contract["argv"], contract["cwd"], contract["mode"],
                              timeout_seconds=timeout_seconds, request_id=request_id,
-                             protocol=contract["protocol"])
+                             protocol=contract["protocol"], auth_preflight=contract["auth_preflight"])
         return {"job": job, "adapter": adapter, "permissions": contract["permissions"],
                 "native_session_id": None, "readiness": "running does not mean task complete"}
 
@@ -120,7 +136,8 @@ def build_server(state_root: Path, profile: str | None = None) -> FastMCP:
         c = launch_contract(selected(adapter), prompt, cwd, mode, expected_sha256, native_session_id,
                             batch_workspace_confirmation=batch_workspace_confirmation)
         return pools[adapter].start(c["argv"], c["cwd"], c["mode"], timeout_seconds=timeout_seconds,
-                                   request_id=request_id, protocol=c["protocol"])
+                                   request_id=request_id, protocol=c["protocol"],
+                                   auth_preflight=c["auth_preflight"])
 
     @server.tool(annotations=READ)
     def lookup_request(adapter: str, request_id: str) -> dict:

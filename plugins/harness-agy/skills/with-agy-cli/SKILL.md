@@ -6,6 +6,8 @@ description: Delegate authorized local work to the unmodified agy CLI through Ha
 Use revalidate_cli and describe_adapter before starting work; follow connect_harness_cli for maintenance
 if identities changed or qualification is incomplete. This package is for agy only.
 Policy: vendor-confirmation-required. Native headless CLI exists; Codex-to-agy service access is not confirmed permitted under the third-party-tool restriction. Discovery only for now.
+For Claude only, auth_status observes the reviewed CLI in this server's environment and intended cwd.
+It does not attest to remaining quota or disabled usage credits; confirm the permitted budget separately.
 Keep the parent Codex task context and verify relevant AGENTS.md instructions. Pass required instructions,
 skill results and user-approved context explicitly in the prompt. Do not read or export hidden memory,
 credentials or settings. Native harness customizations are loaded by that harness itself.

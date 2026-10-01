@@ -172,7 +172,7 @@ def main() -> None:
             event(db, session_id, "stop_requested", {"reason": reason})
 
     def handle_control():
-        nonlocal close_requested, tty_eof
+        nonlocal close_requested, tty_eof, signal_stop
         conn, _ = control.accept()
         with conn:
             conn.settimeout(0.25)
@@ -188,6 +188,15 @@ def main() -> None:
                     raise ValueError("Invalid control request")
                 item = json.loads(payload)
                 command = item["command"]
+                if proc is None:
+                    if command == "cancel":
+                        signal_stop = True
+                        with db:
+                            update(db, session_id, status="cancelling", heartbeat=time.time())
+                            event(db, session_id, "stop_requested", {"reason": "cancelled"})
+                        conn.sendall(json.dumps({"accepted": True, "status": "cancelling"}).encode() + b"\n")
+                        return
+                    raise ValueError("Native session is still checking authorization")
                 if command == "cancel" and (proc.poll() is not None or stopping):
                     response = {"accepted": False, "status": "stopping"}
                     conn.sendall(json.dumps(response).encode() + b"\n")
@@ -234,6 +243,30 @@ def main() -> None:
         control.listen(8)
         control.setblocking(False)
         selector.register(control, selectors.EVENT_READ, "control")
+        if bootstrap.get("auth_preflight") is not None:
+            from codex_harness_connect.auth import require_subscription_route
+            guard = bootstrap["auth_preflight"]
+            if guard["kind"] != "claude-own-subscription":
+                raise ValueError("Unknown native auth preflight")
+            def preflight_cancelled():
+                for key, _ in selector.select(0):
+                    if key.data == "control":
+                        handle_control()
+                return signal_stop
+
+            observation = require_subscription_route(
+                bootstrap["argv"][0], bootstrap["cwd"], guard["expected_sha256"],
+                cancel_requested=preflight_cancelled)
+            with db:
+                event(db, session_id, "auth_preflight", observation)
+            # Drain cancellation queued during final identity/JSON/database work.
+            preflight_cancelled()
+        if signal_stop:
+            with db:
+                update(db, session_id, status="cancelled", finished_at=time.time(),
+                       heartbeat=time.time(), input_closed=1)
+                event(db, session_id, "exit", {"status": "cancelled", "exit_code": None})
+            return
         if bootstrap["mode"] == "pty":
             master, slave = pty.openpty()
             proc = subprocess.Popen(bootstrap["argv"], cwd=bootstrap["cwd"],
@@ -370,9 +403,14 @@ def main() -> None:
             proc.wait()
             _reap()
         with db:
-            update(db, session_id, status="failed", error=f"{type(exc).__name__}: {exc}",
+            cancelled_before_launch = proc is None and signal_stop
+            update(db, session_id, status="cancelled" if cancelled_before_launch else "failed",
+                   error=None if cancelled_before_launch else f"{type(exc).__name__}: {exc}",
                    finished_at=time.time(), heartbeat=time.time(), input_closed=1)
-            event(db, session_id, "error", {"message": str(exc), "phase": "runtime" if proc else "startup"})
+            if cancelled_before_launch:
+                event(db, session_id, "exit", {"status": "cancelled", "exit_code": None})
+            else:
+                event(db, session_id, "error", {"message": str(exc), "phase": "runtime" if proc else "startup"})
     finally:
         selector.close()
         control.close()

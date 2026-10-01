@@ -1,6 +1,6 @@
 {
   "name": "harness-claude",
-  "version": "0.1.0-alpha.6",
+  "version": "0.1.0-alpha.8",
   "description": "Own-account unmodified CLI. Subscription login must stay inside Claude Code. Headless teams are not supported; use interactive sessions for native teams.",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",

@@ -6,17 +6,19 @@ claims and generated artifacts.
 
 | Layer | Actual evidence | Limit |
 | --- | --- | --- |
-| Main regression suite | 400 tests and 74 subtests passed on macOS/Python 3.14.7; 94 affected interaction/generation/revalidation tests passed; Ruff passed | Synthetic processes/protocol fixtures; separate native acceptance gates remain |
-| Installed runtime | Noneditable alpha.6 wheel: all 17 module hashes match source; five catalogs and four form-protocol cases passed. Alpha.5 storage/recovery checks remain recorded below | One local platform, synthetic answering client; no additional vendor inference |
-| Claude native roundtrip | Claude Code 2.1.286: two exact replies, same-ID resume, then original reply recalled after MCP reconnect; empty workspace stayed empty | Three no-tool prompts; no approval/teams/file-edit/UI claim |
+| Main regression suite | 494 tests and 74 subtests passed on macOS/Python 3.14.7; Ruff passed. Independent auth/transport review and targeted tests passed | Synthetic processes/protocol fixtures; separate native acceptance gates remain |
+| Installed runtime | Noneditable alpha.8 wheel: all 18 module hashes match source; five catalogs and four form-protocol cases passed. Alpha.5 storage/recovery checks remain recorded below | One local platform, synthetic answering client; no additional vendor inference |
+| Claude native tasks | Claude Code 2.1.286: earlier exact replies, same-ID resume and recall after reconnect; alpha.8 performed exactly two native Read calls and returned the fixture's context marker and number | Read-only fixture unchanged; no native approval/denial, teams or file-edit acceptance |
+| Native auth guard | Current Desktop auth observation and actual worker preflight used the reviewed own-subscription route. Unavailable/API/override/unknown routes and preflight cancellation tested synthetically | Point-in-time route evidence; neither quota nor future billing is guaranteed |
+| Native help transport | Three full PTY help probes matched after successful pipe probes had returned partial help; current Desktop alpha.8 inventory uses PTY and contains required flags | One observed CLI version/host; top-level tokens are not recursive feature qualification |
 | Claude status parser | Updated parser replayed all three recorded native stdout streams with verified identity/success, zero denials and parent-verification requirement | No new inference; actual native denial/rate-limit cases remain untested |
 | Lifecycle faults | Worker loss, cancellation, SQLite contention, bounded retention, request id recovery and profile isolation tested | Only kernel-observed processes |
 | Full containment | Explicit macOS setsid/reparenting acceptance gate failed; exact captured test processes were cleaned | Production blocker; not hidden by xfail or counted as passing regression |
 | Grok | Official docs/source, installed 1.0.44 alpha help/inspect; prepared JSON contract | Native effective auth/model route and absence of paid fallback unproven; no inference |
 | GLM | Official supported-tool docs and subscription terms read; profile isolation design | Existing usable profile and this orchestration's use classification unverified; no inference |
 | agy/Hermes | Current Google docs/terms, installed1.2.14 help, pinned Hermes source | Applicable permission unresolved; no inference |
-| Local plugin installation | All five alpha.6 packages updated via installed CLI; 20 cache files match generated packages; fresh stdio catalogs expose 16 router/15 scoped tools. Current Desktop loaded all five interaction tool definitions, invoked one check and fresh revalidation | The form call returned cancel with no choice; actual rendering and native consent acceptance remain separate. UI automation denied access to Codex |
-| Hosted CI | [Alpha.4 runtime revision](https://github.com/trukhinyuri/codex-harness-connect/actions/runs/36830383639) passed all four macOS/Linux and Python 3.11/3.14 jobs. Check the exact current revision in the [CI runs](https://github.com/trukhinyuri/codex-harness-connect/actions/workflows/ci.yml) | Synthetic CI is not native vendor or Desktop UI qualification |
+| Local plugin installation | All five alpha.8 packages updated via installed CLI; 20 cache files match generated packages; fresh stdio catalogs expose 17 router/16 Claude/15 other scoped tools. Current Desktop returned the new PTY inventory and auth observation, and ran the Read test | Backend/tool behavior proved; full progress, form rendering and native consent UX remain separate. UI automation denied access to Codex |
+| Hosted CI | Prior [alpha.6 revision](https://github.com/trukhinyuri/codex-harness-connect/actions/runs/36841814699) passed all four macOS/Linux and Python 3.11/3.14 jobs. Verify each later exact revision in the [CI runs](https://github.com/trukhinyuri/codex-harness-connect/actions/workflows/ci.yml) | Synthetic CI is not native vendor or Desktop UI qualification |
 
 Local account observations, absolute home paths, conversations and raw CLI readbacks are private and
 not published. The earlier alpha.2 installation readback preserved all ten configuration groups outside plugins/marketplaces.
@@ -46,10 +48,38 @@ through GitHub. All five local packages and their MCP servers were discovered by
 This proves installation/backend discovery; full runtime and Desktop UI acceptance remain separate gates.
 
 Current configured labels are `connect_harness_cli`, `with_claude_cli`, `with_claude_cli_glm`, `with_grok_cli` and
-`with_agy_cli`. The installed alpha.6 manifests/skills match the generator and current host tool metadata uses these labels; the host controls any namespace prefix in its UI.
+`with_agy_cli`. The installed alpha.8 manifests/skills match the generator; the host controls any namespace prefix in its UI.
 
 Next: unresolved native acceptance/profile/policy/containment/UI gates.
 Preserve the full original objective. See [SQLite lifecycle evidence](sqlite-lifecycle.md).
+
+## Alpha.8 native auth and help acceptance
+
+The mandatory [Claude auth preflight](native-auth.md) runs before admission and again in the worker's
+actual environment/workspace before model launch. It uses the unmodified executable's documented status
+command, verifies binary identity, rejects unknown or overridden routes and retains only curated fields.
+Independent review found missing provider selectors, non-standard JSON acceptance and a cancellation
+finalization gap; these were fixed and checked. The guard changes public launch fingerprints, so an
+uncertain older request must be recovered through `lookup_request`, as the auth document explains.
+
+Native acceptance exposed incomplete `--help` output despite exit code 0, preventing launch before any
+job or model request. The reviewed [PTY help transport](native-discovery.md) then returned stable full
+help. Installed stdio and the current Desktop tool returned the new transport and required flags; disk
+hashes alone were not treated as proof of the loaded backend.
+
+With explicit trust for one disposable Git workspace and current user confirmation that paid usage
+credits were disabled, one bounded native Read task ran through the installed Desktop MCP tool. Its
+transcript contained exactly two Read requests for the instructed files, a verified native conversation
+ID and a successful final result. Parent checks confirmed the context marker, exact fixture value,
+unchanged baseline and all four files, terminal state and no live worker. Native hooks/settings were
+retained; this result does not qualify their internal activity, human approvals, editing, teams or
+general permission parity. Account observations and raw transcripts remain private.
+
+All five alpha.7 and all five alpha.8 immediate installation intervals preserved all ten configuration
+groups outside plugins/marketplaces. Existing default drift remains unexplained; preservation applies
+to each interval's starting settings. Prior wheels/marketplaces remain available for rollback. Further
+native approval/denial, long-task and teams tests remain open and are deferred while the shared weekly
+budget reserves capacity for required work. Full macOS containment still fails its separate gate.
 
 ## Alpha.6 form and consent qualification
 

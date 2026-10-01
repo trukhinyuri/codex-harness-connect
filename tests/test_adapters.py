@@ -65,11 +65,13 @@ def test_batch_trust_acknowledgement_does_not_add_permission_flags(tmp_path):
     evidence = {"binary_sha256": "reviewed", "resolved_path": "/trusted/claude",
                 "help": {"exit_code": 0}, "version": {"exit_code": 0},
                 "flags": ["--print", "--output-format", "--verbose"]}
-    with patch("codex_harness_connect.adapters.inventory", return_value=evidence):
+    with patch("codex_harness_connect.adapters.inventory", return_value=evidence), \
+            patch("codex_harness_connect.adapters.require_subscription_route") as auth:
         contract = launch_contract("claude", "test", str(tmp_path), "batch", "reviewed",
                                    batch_workspace_confirmation=str(tmp_path.resolve()))
     assert contract["argv"] == ["/trusted/claude", "--print", "--output-format",
                                  "stream-json", "--verbose", "test"]
+    auth.assert_called_once_with("/trusted/claude", str(tmp_path.resolve()), "reviewed")
 
 
 @pytest.mark.parametrize("missing", ["--print", "--output-format", "--verbose", "--resume"])

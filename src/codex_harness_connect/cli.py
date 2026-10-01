@@ -16,7 +16,7 @@ DEFAULT_STATE_ROOT = Path(os.environ.get("XDG_STATE_HOME", str(Path.home() / ".l
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--version", action="version", version="0.1.0a6")
+    parser.add_argument("--version", action="version", version="0.1.0a8")
     sub = parser.add_subparsers(dest="command", required=True)
     probe = sub.add_parser("inventory")
     probe.add_argument("executable", help="User-designated trusted installed CLI")

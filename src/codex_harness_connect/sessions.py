@@ -234,7 +234,7 @@ class SessionService:
     def start(self, argv: list[str], cwd: str, mode: str = "pipe",
               env_overrides: dict[str, str] | None = None,
               timeout_seconds: int = 3600, request_id: str | None = None,
-              protocol: str | None = None) -> dict:
+              protocol: str | None = None, auth_preflight: dict | None = None) -> dict:
         if (not isinstance(argv, list) or not argv or any(
                 not isinstance(x, str) or not x or "\0" in x for x in argv)):
             raise ValueError("argv must be a nonempty list of nonempty strings")
@@ -256,8 +256,19 @@ class SessionService:
             self._id(request_id)
         if protocol not in (None, "claude-stream-json") or (protocol and mode != "pipe"):
             raise ValueError("Unsupported native output protocol for this mode")
-        bootstrap = json.dumps({"argv": argv, "cwd": cwd, "mode": mode,
-                                "timeout_seconds": timeout_seconds, "protocol": protocol}).encode()
+        if auth_preflight is not None and (
+            not isinstance(auth_preflight, dict)
+            or set(auth_preflight) != {"kind", "expected_sha256"}
+            or auth_preflight["kind"] != "claude-own-subscription"
+            or not isinstance(auth_preflight["expected_sha256"], str)
+            or not re.fullmatch(r"[0-9a-f]{64}", auth_preflight["expected_sha256"])
+        ):
+            raise ValueError("Invalid native auth preflight")
+        launch = {"argv": argv, "cwd": cwd, "mode": mode,
+                  "timeout_seconds": timeout_seconds, "protocol": protocol}
+        if auth_preflight is not None:
+            launch["auth_preflight"] = auth_preflight
+        bootstrap = json.dumps(launch).encode()
         override_bytes = json.dumps(overrides, sort_keys=True).encode()
         if len(bootstrap) > 256 * 1024 or len(override_bytes) > 256 * 1024:
             raise ValueError("Launch arguments are too large")

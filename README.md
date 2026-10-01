@@ -14,13 +14,18 @@ The [cursor wait tool](docs/waiting.md) observes up to eight existing jobs with 
 transcripts are read explicitly when events become available.
 The [interaction check](docs/native-interaction-contract.md) tests a connected client's standard
 MCP question form without launching a model or granting native tool permission.
+Claude's [native auth preflight](docs/native-auth.md) rejects an API, unavailable or unknown route
+before a model process starts, and repeats in the detached worker's environment and workspace.
+It does not certify remaining subscription quota or disabled usage credits.
+Registered Claude [help discovery](docs/native-discovery.md) uses PTY output to avoid an observed
+incomplete pipe-help response; missing flags and identity changes still stop a launch.
 
 Requested adapters are Claude Code, Claude Code with GLM Coding Plan, official Grok Build and official
 Antigravity `agy`. These are separate contracts. ZCode's desktop agent is not the Claude executable.
 
 | Adapter | Current launch policy | Verified runtime |
 | --- | --- | --- |
-| Claude Code | Personal use of unmodified official CLI, native login/permissions | Native reply, resume and history after MCP reconnect tested on 2.1.286; approvals/teams pending |
+| Claude Code | Personal use of unmodified official CLI, native login/permissions; own-subscription auth preflight | Native reply, resume and history after MCP reconnect tested on 2.1.286; approvals/teams pending |
 | Claude + GLM | Held for documented provider profile and vendor-use classification | Pending |
 | Grok Build | Held for effective subscription-only route and exclusion of native paid fallback | Prepared JSON contract; no inference |
 | agy | Held for clarification of Google third-party-tool restriction | Pending |

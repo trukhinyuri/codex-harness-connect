@@ -1,8 +1,10 @@
 """Non-inference CLI inventory. Help is evidence, never executable instructions."""
 from __future__ import annotations
 
+import errno
 import hashlib
 import os
+import pty
 import re
 import selectors
 import shutil
@@ -58,12 +60,28 @@ def resolve_executable(executable: str) -> Path:
     return resolved
 
 
-def _probe(path: Path, flag: str) -> dict:
+def _probe(path: Path, flag: str, *, transport: str = "pipe") -> dict:
     # A bounded pipe avoids both unbounded RAM and unbounded temporary files.
-    process = subprocess.Popen(
-        [str(path), flag], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT, start_new_session=True, close_fds=True,
-    )
+    if not isinstance(transport, str) or transport not in {"pipe", "pty"}:
+        raise ValueError("Unknown inventory transport")
+    master = slave = None
+    try:
+        if transport == "pty":
+            master, slave = pty.openpty()
+        process = subprocess.Popen(
+            [str(path), flag], stdin=subprocess.DEVNULL,
+            stdout=slave if slave is not None else subprocess.PIPE,
+            stderr=slave if slave is not None else subprocess.STDOUT,
+            start_new_session=True, close_fds=True,
+        )
+    except BaseException:
+        for fd in (master, slave):
+            if fd is not None:
+                os.close(fd)
+        raise
+    if slave is not None:
+        os.close(slave)
+    output_fd = master if master is not None else process.stdout.fileno()
     raw = bytearray()
     deadline = time.monotonic() + PROBE_TIMEOUT_SECONDS
 
@@ -79,8 +97,8 @@ def _probe(path: Path, flag: str) -> dict:
 
     try:
         with selectors.DefaultSelector() as selector:
-            os.set_blocking(process.stdout.fileno(), False)
-            selector.register(process.stdout, selectors.EVENT_READ)
+            os.set_blocking(output_fd, False)
+            selector.register(output_fd, selectors.EVENT_READ)
             while True:
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
@@ -88,9 +106,13 @@ def _probe(path: Path, flag: str) -> dict:
                 if not selector.select(min(remaining, 0.05)):
                     continue
                 try:
-                    chunk = os.read(process.stdout.fileno(), min(65536, MAX_OUTPUT + 1 - len(raw)))
+                    chunk = os.read(output_fd, min(65536, MAX_OUTPUT + 1 - len(raw)))
                 except BlockingIOError:
                     continue
+                except OSError as exc:
+                    if transport != "pty" or exc.errno != errno.EIO:
+                        raise
+                    chunk = b""
                 if not chunk:
                     break
                 raw.extend(chunk)
@@ -116,12 +138,17 @@ def _probe(path: Path, flag: str) -> dict:
                 except subprocess.TimeoutExpired:
                     raise RuntimeError("Probe process did not exit after SIGKILL") from None
                 finally:
-                    process.stdout.close()
+                    if master is not None:
+                        os.close(master)
+                    else:
+                        process.stdout.close()
     return {"exit_code": process.returncode, "text": raw.decode("utf-8", errors="replace")}
 
 
-def inventory(executable: str) -> dict:
+def inventory(executable: str, *, help_transport: str = "pipe") -> dict:
     """Only call for a user-designated, trusted installed CLI. No model requests."""
+    if not isinstance(help_transport, str) or help_transport not in {"pipe", "pty"}:
+        raise ValueError("Unknown inventory transport")
     path = resolve_executable(executable)
     identity = file_fingerprint(path)
 
@@ -136,11 +163,14 @@ def inventory(executable: str) -> dict:
 
     version = _probe(path, "--version")
     assert_unchanged()
-    help_result = _probe(path, "--help")
+    help_result = (_probe(path, "--help") if help_transport == "pipe" else
+                   _probe(path, "--help", transport=help_transport))
     assert_unchanged()
     help_text = help_result["text"]
-    flags = sorted(set(re.findall(r"(?<![\w-])--[A-Za-z][A-Za-z0-9_-]*", help_text)))
-    short_flags = sorted(set(re.findall(r"(?<![\w-])-[A-Za-z0-9](?![\w-])", help_text)))
+    # Retain raw evidence, but terminal styling must not hide a real flag token.
+    plain_help = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", help_text)
+    flags = sorted(set(re.findall(r"(?<![\w-])--[A-Za-z][A-Za-z0-9_-]*", plain_help)))
+    short_flags = sorted(set(re.findall(r"(?<![\w-])-[A-Za-z0-9](?![\w-])", plain_help)))
     return {
         "schema_version": 1,
         "observed_at": datetime.now(UTC).isoformat(),
@@ -150,6 +180,7 @@ def inventory(executable: str) -> dict:
         "binary_identity": identity,
         "version": version,
         "help": help_result,
+        "help_transport": help_transport,
         "help_sha256": hashlib.sha256(help_text.encode()).hexdigest(),
         "flags": flags,
         "short_flags": short_flags,

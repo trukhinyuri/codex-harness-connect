@@ -76,6 +76,10 @@ IDs; never delete receipts, rotate stores automatically or retry an uncertain re
 list_sessions is a compact bounded page: retain its next_cursor while has_more is true.
 Batch requires the exact resolved workspace path explicitly acknowledged by the user as trusted because
 Claude --print skips its trust dialog. Never invent that acknowledgement or treat it as tool approval.
+For Claude, call auth_status with the reviewed identity and intended workspace before a model request.
+Launch and worker preflights independently reject unavailable, API, override or unknown auth routes.
+The observation does not prove remaining included quota or disabled usage credits. Under a subscription-only
+budget, require current user-confirmed usage credits disabled; do not change billing/auth to pass a check.
 Use native interactive mode for native terminal/teams features;
 TTY text is not the Codex internal subagent UI. No yolo, bypass permissions, auth-token extraction, hidden
 paid fallback or sharing credentials. Current policy holds must be resolved through vendor evidence.
@@ -100,6 +104,8 @@ description: Delegate authorized local work to the unmodified {profile} CLI thro
 Use revalidate_cli and describe_adapter before starting work; follow connect_harness_cli for maintenance
 if identities changed or qualification is incomplete. This package is for {profile} only.
 Policy: {adapter.policy}. {description}
+For Claude only, auth_status observes the reviewed CLI in this server's environment and intended cwd.
+It does not attest to remaining quota or disabled usage credits; confirm the permitted budget separately.
 Keep the parent Codex task context and verify relevant AGENTS.md instructions. Pass required instructions,
 skill results and user-approved context explicitly in the prompt. Do not read or export hidden memory,
 credentials or settings. Native harness customizations are loaded by that harness itself.
@@ -124,7 +130,7 @@ subagents, and child tools have their own permission enforcement. Policy-held ad
         skill_name, body = "connect-harness-cli", RESEARCH_SKILL
     args = ["serve"] + (["--profile", profile] if profile else [])
     manifest = {
-        "name": name, "version": "0.1.0-alpha.6", "description": description,
+        "name": name, "version": "0.1.0-alpha.8", "description": description,
         "skills": "./skills/", "mcpServers": "./.mcp.json",
         "interface": {"displayName": display_name, "shortDescription": "Local CLI delegation",
                       "longDescription": description, "developerName": "Yuri Trukhin",

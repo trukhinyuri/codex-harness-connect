@@ -41,7 +41,7 @@ BUNDLED_CLI_PATHS = ("Contents/Resources/codex-cli/bin/codex",
                      "Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
                      "Contents/Resources/codex-cli", "Contents/Resources/codex",
                      "Contents/Resources/bin/codex", "Contents/MacOS/codex")
-SOURCE_FILES = ("__init__.py", "__main__.py", "adapters.py", "cli.py", "discovery.py", "grok.py", "plugins.py",
+SOURCE_FILES = ("__init__.py", "__main__.py", "adapters.py", "auth.py", "cli.py", "discovery.py", "grok.py", "plugins.py",
                 "protocols.py", "revalidation.py", "server.py", "sessions.py", "worker.py",
                 "waiting.py", "worktrees.py", "storage.py", "history.py", "elicitation.py")
 DEPENDENCIES = ("mcp", "pydantic", "pydantic-settings", "anyio", "httpx", "httpx-sse",
@@ -73,9 +73,10 @@ def _without_timestamps(value):
     return value
 
 
-def _observe_cli(executable: str) -> dict:
+def _observe_cli(executable: str, help_transport: str = "pipe") -> dict:
     try:
-        current = inventory(executable)
+        current = (inventory(executable) if help_transport == "pipe" else
+                   inventory(executable, help_transport=help_transport))
     except FileNotFoundError:
         return {"status": "unavailable", "executable": executable,
                 "reason": "Executable is absent or disappeared during observation"}
@@ -345,7 +346,7 @@ def revalidate(adapter: str, state_root: Path) -> dict:
         previous, previous_status = _previous(directory_fd, adapter)
         # Independent non-inference probes overlap; each inventory retains its own identity checks.
         with ThreadPoolExecutor(max_workers=3) as executor:
-            target_future = executor.submit(_observe_cli, selected.executable)
+            target_future = executor.submit(_observe_cli, selected.executable, selected.help_transport)
             path_future = executor.submit(_observe_cli, "codex")
             desktop_future = executor.submit(_desktop)
             runtime = _runtime()

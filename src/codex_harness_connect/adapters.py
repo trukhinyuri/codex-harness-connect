@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
+from .auth import require_subscription_route
 from .discovery import inventory
 
 Mode = Literal["batch", "interactive"]
@@ -38,6 +39,7 @@ class Adapter:
     policy: str
     sources: tuple[str, ...]
     notes: str
+    help_transport: str = "pipe"
 
 
 ADAPTERS = {
@@ -48,6 +50,7 @@ ADAPTERS = {
          "https://code.claude.com/docs/en/agent-teams"),
         "Own-account unmodified CLI. Subscription login must stay inside Claude Code. "
         "Headless teams are not supported; use interactive sessions for native teams.",
+        help_transport="pty",
     ),
     "claude-glm": Adapter(
         "claude-glm", "claude", "vendor-confirmation-required",
@@ -55,6 +58,7 @@ ADAPTERS = {
          "https://docs.z.ai/legal-agreement/subscription-terms"),
         "Claude Code + an existing GLM Coding Plan configuration is distinct from ZCode. "
         "This project's orchestration classification needs vendor confirmation.",
+        help_transport="pty",
     ),
     "grok": Adapter(
         "grok", "grok", "subscription-route-confirmation-required",
@@ -121,7 +125,7 @@ def launch_contract(
             "workspace path explicitly authorized as trusted by the user; use interactive mode "
             "when this confirmation is absent. This does not approve native tool requests."
         )
-    current = inventory(adapter.executable)
+    current = inventory(adapter.executable, help_transport=adapter.help_transport)
     if current["binary_sha256"] != expected_sha256:
         raise ValueError("CLI identity changed; inventory and review the installed version again")
     if current["help"]["exit_code"] or current["version"]["exit_code"]:
@@ -149,9 +153,11 @@ def launch_contract(
     if prompt.startswith("-"):
         raise ValueError("Prompt must not start with '-' (ambiguous native CLI option)")
     argv.append(prompt)
+    require_subscription_route(current["resolved_path"], str(directory), expected_sha256)
     return {
         "argv": argv, "cwd": str(directory), "mode": "pipe" if mode == "batch" else "pty",
         "adapter": name, "identity": current["binary_sha256"],
         "protocol": "claude-stream-json" if mode == "batch" else None,
+        "auth_preflight": {"kind": "claude-own-subscription", "expected_sha256": expected_sha256},
         "permissions": "Native CLI policies apply; Codex sandbox is not inherited by assertion",
     }

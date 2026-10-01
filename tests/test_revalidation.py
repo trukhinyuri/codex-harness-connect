@@ -249,7 +249,7 @@ def test_unrelated_app_at_known_path_is_not_probed(tmp_path, monkeypatch):
 
 @pytest.mark.parametrize("status", ["unavailable", "unknown"])
 def test_repeated_missing_or_unknown_identity_always_invalidates(environment, monkeypatch, status):
-    monkeypatch.setattr(revalidation, "_observe_cli", lambda executable: {
+    monkeypatch.setattr(revalidation, "_observe_cli", lambda executable, help_transport="pipe": {
         "status": status, "executable": executable, "reason": "Not established"})
     first = revalidation.revalidate("claude", environment[0])
     second = revalidation.revalidate("claude", environment[0])
@@ -312,7 +312,7 @@ def test_help_is_compact_but_full_help_change_still_changes_fingerprint(environm
 def test_three_independent_local_observations_run_concurrently(environment, monkeypatch):
     barrier = threading.Barrier(3, timeout=2)
 
-    def observe_cli(executable):
+    def observe_cli(executable, help_transport="pipe"):
         barrier.wait()
         return {"status": "unavailable", "executable": executable}
 
