@@ -1,0 +1,43 @@
+"""Explicit authoring and local MCP entrypoints. No implicit auth or installation."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+from pathlib import Path
+
+from .adapters import ADAPTERS
+from .discovery import inventory
+from .plugins import generate_marketplace
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--version", action="version", version="0.1.0a1")
+    sub = parser.add_subparsers(dest="command", required=True)
+    probe = sub.add_parser("inventory")
+    probe.add_argument("executable", help="User-designated trusted installed CLI")
+    probe.add_argument("--output", type=Path)
+    gen = sub.add_parser("generate-marketplace")
+    gen.add_argument("directory", type=Path)
+    gen.add_argument("--server-command", default="codex-harness-connect")
+    serve = sub.add_parser("serve")
+    serve.add_argument("--profile", choices=list(ADAPTERS))
+    serve.add_argument("--state-root", type=Path,
+                       default=Path(os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local/state")))
+                       / "codex-harness-connect")
+    args = parser.parse_args(argv)
+    if args.command == "serve":
+        from .server import build_server
+        build_server(args.state_root, args.profile).run(transport="stdio")
+        return 0
+    data = inventory(args.executable) if args.command == "inventory" else generate_marketplace(
+        args.directory, args.server_command)
+    serialized = json.dumps(data, indent=2) + "\n"
+    if getattr(args, "output", None):
+        # Public CLI identity data only; never overwrite an existing evidence artifact.
+        with args.output.open("x") as stream:
+            stream.write(serialized)
+    else:
+        print(serialized, end="")
+    return 0

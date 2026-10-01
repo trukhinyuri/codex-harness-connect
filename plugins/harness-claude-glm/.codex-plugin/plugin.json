@@ -1,0 +1,18 @@
+{
+  "name": "harness-claude-glm",
+  "version": "0.1.0-alpha.1",
+  "description": "Claude Code + an existing GLM Coding Plan configuration is distinct from ZCode. This project's orchestration classification needs vendor confirmation.",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "harness-claude-glm",
+    "shortDescription": "Local CLI sessions and reviewed delegation",
+    "longDescription": "Claude Code + an existing GLM Coding Plan configuration is distinct from ZCode. This project's orchestration classification needs vendor confirmation.",
+    "developerName": "Yuri Trukhin",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ]
+  }
+}

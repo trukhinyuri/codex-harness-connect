@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "chc_agy": {
+      "command": "codex-harness-connect",
+      "args": [
+        "serve",
+        "--profile",
+        "agy"
+      ]
+    }
+  }
+}

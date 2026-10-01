@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "chc_router": {
+      "command": "codex-harness-connect",
+      "args": [
+        "serve"
+      ]
+    }
+  }
+}

@@ -1,0 +1,154 @@
+"""Codex-facing MCP tools; process lifetime is owned by the independent session worker."""
+from __future__ import annotations
+
+from pathlib import Path
+
+from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
+
+from .adapters import ADAPTERS, get_adapter, launch_contract
+from .discovery import inventory
+from .sessions import SessionService
+from .worktrees import create_worktree
+
+READ = ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=False)
+WRITE = ToolAnnotations(readOnlyHint=False, destructiveHint=True, openWorldHint=True)
+
+
+def build_server(state_root: Path, profile: str | None = None) -> FastMCP:
+    if profile:
+        get_adapter(profile)
+    # Each scoped plugin can control only its own harness. The universal plugin can
+    # coordinate the same per-harness stores; a native id never crosses namespaces.
+    pools = {name: SessionService(state_root / name) for name in ([profile] if profile else ADAPTERS)}
+    server = FastMCP("codex-harness-connect", log_level="WARNING", instructions=(
+        "Local native CLI orchestration. Inventory is not permission or full feature proof. "
+        "Use only authorized task context. Keep native permissions; never bypass or change auth. "
+        "Policy-held adapters cannot launch. Start once, poll with cursors; cancel explicitly and "
+        "verify terminal state. A failed MCP call does not prove the worker stopped. "
+        "Codex memory, sandbox and native subagent UI are not automatically inherited."
+    ))
+
+    def selected(adapter: str) -> str:
+        if profile and adapter != profile:
+            raise ValueError("This plugin is scoped to another harness")
+        get_adapter(adapter)
+        return adapter
+
+    def owner(session_id: str) -> SessionService:
+        for service in pools.values():
+            try:
+                service.status(session_id, limit=1)
+                return service
+            except KeyError:
+                continue
+        raise KeyError("Session is absent from this plugin's harness scope")
+
+    @server.tool(annotations=READ)
+    def describe_adapter(adapter: str) -> dict:
+        """Read native adapter scope, policy and primary-source links. No model request."""
+        item = get_adapter(selected(adapter))
+        return {"name": item.name, "executable": item.executable, "policy": item.policy,
+                "sources": list(item.sources), "notes": item.notes,
+                "production_verified": False, "desktop_parity": "not established"}
+
+    @server.tool(annotations=READ)
+    def inventory_cli(adapter: str) -> dict:
+        """Probe a registered trusted CLI's --version/--help. No authentication or model call."""
+        return inventory(get_adapter(selected(adapter)).executable)
+
+    if profile is None:
+        @server.tool(annotations=WRITE)
+        def inventory_candidate(executable: str) -> dict:
+            """Read --help/--version of an explicitly user-designated trusted installed CLI.
+
+            Executing an unknown binary is not safe merely because its argument is --help.
+            Obtain user designation first. This probe neither registers nor launches an adapter.
+            """
+            return inventory(executable)
+
+    @server.tool(annotations=WRITE)
+    def start_session(adapter: str, prompt: str, cwd: str, expected_sha256: str, request_id: str,
+                      mode: str = "interactive", native_options: list[str] | None = None,
+                      timeout_seconds: int = 3600,
+                      batch_workspace_confirmation: str | None = None) -> dict:
+        """Start authorized native work; this is not a Codex subagent.
+
+        Batch skips Claude's workspace trust dialog. Only supply its exact resolved path after
+        explicit user authorization that this directory is trusted for native hooks/settings.
+        The field is an acknowledgement, not an enforced filesystem sandbox or tool approval.
+        """
+        contract = launch_contract(selected(adapter), prompt, cwd, mode, expected_sha256,
+                                   options=native_options,
+                                   batch_workspace_confirmation=batch_workspace_confirmation)
+        job = pools[adapter].start(contract["argv"], contract["cwd"], contract["mode"],
+                             timeout_seconds=timeout_seconds, request_id=request_id,
+                             protocol=contract["protocol"])
+        return {"job": job, "adapter": adapter, "permissions": contract["permissions"],
+                "native_session_id": None, "readiness": "running does not mean task complete"}
+
+    @server.tool(annotations=WRITE)
+    def resume_session(adapter: str, source_session_id: str, prompt: str, cwd: str,
+                       expected_sha256: str, request_id: str, mode: str = "interactive",
+                       timeout_seconds: int = 3600,
+                       batch_workspace_confirmation: str | None = None) -> dict:
+        """Resume a verified native conversation id in a new OS job. No 'most recent' guessing."""
+        selected(adapter)
+        source = pools[adapter].status(source_session_id)["session"]
+        native_session_id = source["native_session_id"]
+        if not native_session_id or source["protocol"] != "claude-stream-json":
+            raise ValueError("Source job has no verified native conversation ID")
+        if source["status"] not in {"completed", "failed", "cancelled", "timed_out"}:
+            raise ValueError("Source job must have a recorded terminal state before resuming")
+        if source["cwd"] != str(Path(cwd).resolve(strict=True)):
+            raise ValueError("Resume must use the source job's workspace")
+        c = launch_contract(selected(adapter), prompt, cwd, mode, expected_sha256, native_session_id,
+                            batch_workspace_confirmation=batch_workspace_confirmation)
+        return pools[adapter].start(c["argv"], c["cwd"], c["mode"], timeout_seconds=timeout_seconds,
+                                   request_id=request_id, protocol=c["protocol"])
+
+    @server.tool(annotations=READ)
+    def lookup_request(adapter: str, request_id: str) -> dict:
+        """Recover a start/resume job after an uncertain response, without another model request."""
+        selected(adapter)
+        return pools[adapter].lookup_request(request_id)
+
+    @server.tool(annotations=READ)
+    def session_events(session_id: str, after: int = 0, limit: int = 100) -> dict:
+        """Read live state plus a durable bounded event page; retain next_cursor for reconnect."""
+        return owner(session_id).status(session_id, after, limit)
+
+    @server.tool(annotations=READ)
+    def list_sessions() -> dict:
+        """List connector jobs; no vendor inference request."""
+        return {"sessions": [{**job, "adapter": name} for name, service in pools.items()
+                             for job in service.list()]}
+
+    @server.tool(annotations=WRITE)
+    def send_input(session_id: str, text: str) -> dict:
+        """Send explicitly authorized native TUI input, including user answers; never auto-approve."""
+        return owner(session_id).send(session_id, text)
+
+    @server.tool(annotations=WRITE)
+    def close_input(session_id: str) -> dict:
+        """Request EOF; this is not cancellation and an active turn may continue."""
+        return owner(session_id).close_input(session_id)
+
+    @server.tool(annotations=WRITE)
+    def cancel_session(session_id: str) -> dict:
+        """Cancel a connector worker and its child process group; read final state to verify."""
+        return owner(session_id).cancel(session_id)
+
+    @server.tool(annotations=WRITE)
+    def new_worktree(repository: str, name: str, base: str = "HEAD") -> dict:
+        """Create a user-owned git worktree for an explicitly authorized parallel task."""
+        return create_worktree(repository, name, base)
+
+    @server.resource("harness://capabilities")
+    def capabilities() -> dict:
+        return {"adapters": [profile] if profile else list(ADAPTERS),
+                "native_picker": False, "automatic_memory_transfer": False,
+                "automatic_sandbox_inheritance": False, "hosted_cloud": "not verified",
+                "external_native_teams": "interactive CLI only where supported and enabled"}
+
+    return server

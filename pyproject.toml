@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling==1.28.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "codex-harness-connect"
+version = "0.1.0a1"
+description = "Evidence-driven local Codex plugins for unmodified agent CLIs"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = ["mcp==1.30.0"]
+
+[project.optional-dependencies]
+dev = ["pytest==9.1.1", "ruff==0.16.6"]
+
+[project.scripts]
+codex-harness-connect = "codex_harness_connect.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/codex_harness_connect"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP"]

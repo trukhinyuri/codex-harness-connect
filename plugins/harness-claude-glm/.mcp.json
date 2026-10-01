@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "chc_claude_glm": {
+      "command": "codex-harness-connect",
+      "args": [
+        "serve",
+        "--profile",
+        "claude-glm"
+      ]
+    }
+  }
+}

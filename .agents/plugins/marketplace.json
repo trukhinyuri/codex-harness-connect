@@ -1,0 +1,68 @@
+{
+  "name": "codex-harness-connect",
+  "interface": {
+    "displayName": "Harness Connect"
+  },
+  "plugins": [
+    {
+      "name": "codex-harness-connect",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex-harness-connect"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "harness-claude",
+      "source": {
+        "source": "local",
+        "path": "./plugins/harness-claude"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "harness-claude-glm",
+      "source": {
+        "source": "local",
+        "path": "./plugins/harness-claude-glm"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "harness-grok",
+      "source": {
+        "source": "local",
+        "path": "./plugins/harness-grok"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "harness-agy",
+      "source": {
+        "source": "local",
+        "path": "./plugins/harness-agy"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
