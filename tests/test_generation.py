@@ -88,7 +88,10 @@ def test_successful_batch_preserves_catalog_and_manifest_contract(tmp_path):
         server_names.add(server_name)
         assert config["command"] == "reviewed-command"
         assert config["args"][0] == "serve"
-        assert manifest["version"] == "0.1.0-alpha.16"
+        import tomllib
+        release = tomllib.loads((Path(__file__).parents[1] / "pyproject.toml").read_text())["project"]["version"]
+        assert plugins.__version__ == release
+        assert manifest["version"] == release.replace("a", "-alpha.")
         if item["name"] == "codex-harness-connect":
             assert manifest["interface"]["displayName"] == "connect_harness_cli"
             skill = directory / "skills/connect-harness-cli/SKILL.md"

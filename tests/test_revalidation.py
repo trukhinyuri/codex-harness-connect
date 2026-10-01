@@ -122,6 +122,14 @@ def test_existing_policy_holds_are_preserved(environment):
     assert gate["status"] == "blocked_by_existing_policy_hold"
 
 
+def test_claude_diagnostic_does_not_reintroduce_subscription_launch_gate(environment):
+    result = revalidation.revalidate("claude", environment[0])
+    gate = next(item for item in result["mandatory_acceptance_gates"] if item["gate"] == "policy_billing")
+    assert "not a launch prerequisite" in gate["required_evidence"]
+    assert "effective subscription/auth route" not in gate["required_evidence"]
+    assert result["adapter_policy"]["hold_preserved"] is False
+
+
 @pytest.mark.parametrize("corruption", ["invalid_json", "invalid_schema", "tampered_fingerprint"])
 def test_corrupt_prior_observation_cannot_carry_qualification(environment, corruption):
     root = environment[0]

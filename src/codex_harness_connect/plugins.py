@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from . import __version__
 from .adapters import ADAPTERS, get_adapter
 
 RESEARCH_SKILL = """---
@@ -157,7 +158,7 @@ Claude-specific --print trust, Ultracode, resume and team features are not impli
         skill_name, body = "connect-harness-cli", RESEARCH_SKILL
     args = ["serve"] + (["--profile", profile] if profile else [])
     manifest = {
-        "name": name, "version": "0.1.0-alpha.16", "description": description,
+        "name": name, "version": __version__.replace("a", "-alpha."), "description": description,
         "skills": "./skills/", "mcpServers": "./.mcp.json",
         "interface": {"displayName": display_name, "shortDescription": "Local CLI delegation",
                       "longDescription": description, "developerName": "Yuri Trukhin",

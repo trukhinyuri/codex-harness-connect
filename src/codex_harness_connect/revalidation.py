@@ -381,7 +381,11 @@ def revalidate(adapter: str, state_root: Path) -> dict:
             "qualification": {"status": "incomplete", "production_verified": False,
                               "desktop_parity": "not established", "prior_qualification_carried_forward": False,
                               "claim": "Fresh alpha compatibility evidence only; no acceptance gate is proven"},
-            "mandatory_acceptance_gates": [{"gate": gate, "required_evidence": evidence,
+            "mandatory_acceptance_gates": [{"gate": gate, "required_evidence": (
+                                                "Unmodified native CLI, current default model/provider/settings; "
+                                                "no connector auth/billing changes or injected paid fallback. "
+                                                "Subscription diagnostics are optional, not a launch prerequisite."
+                                                if adapter == "claude" and gate == "policy_billing" else evidence),
                                             "status": ("blocked_by_existing_policy_hold" if gate == "policy_billing"
                                                        and policy["hold_preserved"] else "required_not_tested")}
                                            for gate, evidence in ACCEPTANCE_GATES.items()],
