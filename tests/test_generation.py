@@ -123,7 +123,8 @@ def test_dangling_marketplace_symlink_is_not_overwritten(tmp_path):
 def test_generated_skills_reuse_authorization_without_inventing_billing_or_trust(tmp_path):
     result = plugins.generate_marketplace(tmp_path)
     for item in result["plugins"]:
-        skill = next((Path(item["path"]) / "skills").glob("*/SKILL.md")).read_text()
+        skill_dir = "connect-harness-cli" if item["profile"] is None else f"with-{item['profile']}-cli"
+        skill = (Path(item["path"]) / "skills" / skill_dir / "SKILL.md").read_text()
         if item["name"] == "codex-harness-connect":
             assert "Do not perform" in skill
             assert "subscription/route checks as a launch gate" in skill

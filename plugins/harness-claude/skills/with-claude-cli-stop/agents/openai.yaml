@@ -1,0 +1,3 @@
+interface:
+  display_name: "with_claude_cli_stop"
+  short_description: "Stop active CLI in this chat"
