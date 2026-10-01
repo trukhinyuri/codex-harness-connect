@@ -1,11 +1,11 @@
 {
   "name": "codex-harness-connect",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "description": "Research and connect local agent CLIs with explicit capability and policy evidence.",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
-    "displayName": "connect_cli",
+    "displayName": "connect_harness_cli",
     "shortDescription": "Local CLI delegation",
     "longDescription": "Research and connect local agent CLIs with explicit capability and policy evidence.",
     "developerName": "Yuri Trukhin",

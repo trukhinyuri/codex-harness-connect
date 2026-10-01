@@ -126,6 +126,13 @@ def launch_contract(
         raise ValueError("CLI identity changed; inventory and review the installed version again")
     if current["help"]["exit_code"] or current["version"]["exit_code"]:
         raise ValueError("CLI probes failed")
+    required_flags = {"--resume"} if native_session_id else set()
+    if mode == "batch":
+        required_flags |= {"--print", "--output-format", "--verbose"}
+    missing_flags = required_flags - set(current["flags"])
+    if missing_flags:
+        raise ValueError("Native launch contract changed; review missing CLI flags: "
+                         + ", ".join(sorted(missing_flags)))
     extra = validate_options(options or [], current["flags"])
     argv = [current["resolved_path"]]
     if native_session_id:

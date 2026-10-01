@@ -8,6 +8,7 @@ from mcp.types import ToolAnnotations
 
 from .adapters import ADAPTERS, get_adapter, launch_contract
 from .discovery import inventory
+from .revalidation import revalidate
 from .sessions import SessionService
 from .worktrees import create_worktree
 
@@ -56,6 +57,15 @@ def build_server(state_root: Path, profile: str | None = None) -> FastMCP:
     def inventory_cli(adapter: str) -> dict:
         """Probe a registered trusted CLI's --version/--help. No authentication or model call."""
         return inventory(get_adapter(selected(adapter)).executable)
+
+    @server.tool(annotations=WRITE)
+    def revalidate_cli(adapter: str) -> dict:
+        """Fresh CLI/host/runtime observation and drift invalidation; no model or auth call.
+
+        Writes a private observation ledger. Full policy and native/Desktop acceptance remain
+        required even when identities are unchanged. This does not certify latest versions.
+        """
+        return revalidate(selected(adapter), state_root)
 
     if profile is None:
         @server.tool(annotations=WRITE)

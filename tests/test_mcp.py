@@ -22,10 +22,12 @@ def test_real_stdio_mcp_handshake_schema_and_policy_error(tmp_path):
                 init = await session.initialize()
                 assert init.serverInfo.name == "codex-harness-connect"
                 tools = {tool.name: tool for tool in (await session.list_tools()).tools}
-                assert {"start_session", "cancel_session", "session_events", "inventory_cli"} <= tools.keys()
+                assert {"start_session", "cancel_session", "session_events", "inventory_cli",
+                        "revalidate_cli"} <= tools.keys()
                 assert tools["start_session"].annotations.readOnlyHint is False
                 assert tools["session_events"].annotations.readOnlyHint is True
                 assert tools["inventory_candidate"].annotations.readOnlyHint is False
+                assert tools["revalidate_cli"].annotations.readOnlyHint is False
                 adapter = await session.call_tool("describe_adapter", {"adapter": "agy"})
                 assert adapter.isError is False
                 assert "vendor-confirmation-required" in str(adapter.content)
@@ -59,6 +61,9 @@ def test_scoped_profile_cannot_read_or_control_other_adapter(tmp_path):
                 await session.initialize()
                 tools = {tool.name for tool in (await session.list_tools()).tools}
                 assert "inventory_candidate" not in tools
+                invalid_observation = await session.call_tool("revalidate_cli", {"adapter": "claude"})
+                assert invalid_observation.isError is True
+                assert not (state / "revalidation").exists()
                 result = await session.call_tool("list_sessions", {})
                 assert result.isError is False
                 assert json.loads(result.content[0].text) == {"sessions": []}

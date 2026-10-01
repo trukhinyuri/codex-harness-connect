@@ -3,7 +3,8 @@ name: with-claude-cli
 description: Delegate authorized local work to the unmodified claude CLI through Harness Connect.
 ---
 
-Use inventory_cli and describe_adapter before starting work. This package is for claude only.
+Use revalidate_cli and describe_adapter before starting work; follow connect_harness_cli for maintenance
+if identities changed or qualification is incomplete. This package is for claude only.
 Policy: personal-unmodified-cli. Own-account unmodified CLI. Subscription login must stay inside Claude Code. Headless teams are not supported; use interactive sessions for native teams.
 Keep the parent Codex task context and verify relevant AGENTS.md instructions. Pass required instructions,
 skill results and user-approved context explicitly in the prompt. Do not read or export hidden memory,

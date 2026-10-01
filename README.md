@@ -23,7 +23,9 @@ Antigravity `agy`. These are separate contracts. ZCode's desktop agent is not th
 
 The connector never extracts auth tokens, implements a subscription API proxy, installs a CLI, chooses
 a paid fallback, or adds bypass/yolo arguments. CLI updates invalidate an inventory identity and require
-review. Native credentials/settings remain owned by each vendor CLI.
+review. The `connect_harness_cli` skill requires the parent agent to perform a fresh observation and the
+maintenance workflow on every invocation, as described in [revalidation](docs/revalidation.md). An unchanged fingerprint does
+not replace current policy review or native acceptance. Native credentials/settings remain owned by each vendor CLI.
 
 ## Host boundaries
 
@@ -47,6 +49,7 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -e '.[dev]'
 .venv/bin/python -m pytest
 codex-harness-connect inventory claude
+codex-harness-connect revalidate claude --state-root /path/to/private/state
 codex-harness-connect generate-marketplace /path/to/new/marketplace
 ```
 
@@ -62,7 +65,7 @@ The bundled marketplace contains `codex-harness-connect` and `harness-claude`, `
 `harness-grok`, `harness-agy`. Policy-held adapters expose evidence and discovery but cannot launch.
 Existing plugin directories/marketplaces are not overwritten by the generator.
 
-The configured display labels are `connect_cli`, `with_claude_cli`, `with_claude_cli_glm`, `with_grok_cli`,
+The configured display labels are `connect_harness_cli`, `with_claude_cli`, `with_claude_cli_glm`, `with_grok_cli`,
 and `with_agy_cli`. Skill interface metadata preserves these labels literally; the host controls any
 additional namespace prefix in its UI. Package identifiers
 stay unchanged so existing installations can update without adding duplicate plugins. Skill identifiers

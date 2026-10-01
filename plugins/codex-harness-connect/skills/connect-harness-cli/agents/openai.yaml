@@ -1,3 +1,3 @@
 interface:
-  display_name: "connect_cli"
+  display_name: "connect_harness_cli"
   short_description: "Local CLI delegation"

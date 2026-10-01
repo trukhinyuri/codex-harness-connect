@@ -3,7 +3,8 @@ name: with-agy-cli
 description: Delegate authorized local work to the unmodified agy CLI through Harness Connect.
 ---
 
-Use inventory_cli and describe_adapter before starting work. This package is for agy only.
+Use revalidate_cli and describe_adapter before starting work; follow connect_harness_cli for maintenance
+if identities changed or qualification is incomplete. This package is for agy only.
 Policy: vendor-confirmation-required. Native headless CLI exists; Codex-to-agy service access is not confirmed permitted under the third-party-tool restriction. Discovery only for now.
 Keep the parent Codex task context and verify relevant AGENTS.md instructions. Pass required instructions,
 skill results and user-approved context explicitly in the prompt. Do not read or export hidden memory,

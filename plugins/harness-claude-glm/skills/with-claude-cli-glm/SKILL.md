@@ -3,7 +3,8 @@ name: with-claude-cli-glm
 description: Delegate authorized local work to the unmodified claude-glm CLI through Harness Connect.
 ---
 
-Use inventory_cli and describe_adapter before starting work. This package is for claude-glm only.
+Use revalidate_cli and describe_adapter before starting work; follow connect_harness_cli for maintenance
+if identities changed or qualification is incomplete. This package is for claude-glm only.
 Policy: vendor-confirmation-required. Claude Code + an existing GLM Coding Plan configuration is distinct from ZCode. This project's orchestration classification needs vendor confirmation.
 Keep the parent Codex task context and verify relevant AGENTS.md instructions. Pass required instructions,
 skill results and user-approved context explicitly in the prompt. Do not read or export hidden memory,

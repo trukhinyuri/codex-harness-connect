@@ -1,4 +1,5 @@
 import hashlib
+import os
 import subprocess
 import sys
 import time
@@ -90,3 +91,70 @@ def test_inventory_preserves_camel_case_and_short_flags(tmp_path):
     result = discovery.inventory(str(path))
     assert result["flags"] == ["--XFeature", "--allowedTools", "--foo-bar", "--snake_case"]
     assert result["short_flags"] == ["-p", "-s"]
+
+
+@pytest.mark.parametrize("changed_flag", ["--version", "--help"])
+def test_inventory_rejects_binary_mutation_during_each_probe(tmp_path, changed_flag):
+    calls = tmp_path / "calls"
+    path = executable(tmp_path, (
+        "import sys\n"
+        f"with open({str(calls)!r},'a') as stream: stream.write(sys.argv[1]+'\\n')\n"
+        "print('--alpha')\n"
+        f"if sys.argv[1]=={changed_flag!r}:\n"
+        "    with open(__file__,'a') as stream: stream.write('# changed\\n')\n"
+    ))
+    with pytest.raises(ValueError, match="identity changed during probes"):
+        discovery.inventory(str(path))
+    assert calls.read_text().splitlines() == (["--version"] if changed_flag == "--version"
+                                             else ["--version", "--help"])
+
+
+def test_inventory_rejects_identical_binary_replacement(tmp_path, monkeypatch):
+    path = executable(tmp_path, "print('--alpha')\n")
+    original_probe = discovery._probe
+    calls = []
+
+    def replace_after_probe(current, flag):
+        calls.append(flag)
+        result = original_probe(current, flag)
+        replacement = tmp_path / "replacement"
+        replacement.write_bytes(path.read_bytes())
+        replacement.chmod(0o700)
+        os.replace(replacement, path)
+        return result
+
+    monkeypatch.setattr(discovery, "_probe", replace_after_probe)
+    with pytest.raises(ValueError, match="identity changed during probes"):
+        discovery.inventory(str(path))
+    assert calls == ["--version"]
+
+
+def test_inventory_rejects_resolved_symlink_identity_change(tmp_path, monkeypatch):
+    first = executable(tmp_path, "print('--alpha')\n")
+    second = tmp_path / "second"
+    second.write_bytes(first.read_bytes())
+    second.chmod(0o700)
+    alias = tmp_path / "cli"
+    alias.symlink_to(first)
+    original_probe = discovery._probe
+
+    def retarget_after_probe(path, flag):
+        result = original_probe(path, flag)
+        alias.unlink()
+        alias.symlink_to(second)
+        return result
+
+    monkeypatch.setattr(discovery, "_probe", retarget_after_probe)
+    with pytest.raises(ValueError, match="identity changed during probes"):
+        discovery.inventory(str(alias))
+
+
+def test_file_fingerprint_is_bounded_and_refuses_nonregular_files(tmp_path):
+    path = tmp_path / "oversize"
+    path.write_bytes(b"x" * 100)
+    with pytest.raises(ValueError, match="bounded regular file"):
+        discovery.file_fingerprint(path, 50)
+    fifo = tmp_path / "fifo"
+    os.mkfifo(fifo)
+    with pytest.raises(ValueError, match="bounded regular file"):
+        discovery.file_fingerprint(fifo)

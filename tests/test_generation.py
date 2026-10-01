@@ -88,6 +88,16 @@ def test_successful_batch_preserves_catalog_and_manifest_contract(tmp_path):
         server_names.add(server_name)
         assert config["command"] == "reviewed-command"
         assert config["args"][0] == "serve"
+        assert manifest["version"] == "0.1.0-alpha.3"
+        if item["name"] == "codex-harness-connect":
+            assert manifest["interface"]["displayName"] == "connect_harness_cli"
+            skill = directory / "skills/connect-harness-cli/SKILL.md"
+            assert skill.is_file()
+            assert not (directory / "skills/connect-cli").exists()
+            assert "EVERY repeated invocation" in skill.read_text()
+            assert "revalidate_cli on EVERY invocation" in skill.read_text()
+            assert "display_name: \"connect_harness_cli\"" in (
+                skill.parent / "agents/openai.yaml").read_text()
 
 
 def test_dangling_marketplace_symlink_is_not_overwritten(tmp_path):

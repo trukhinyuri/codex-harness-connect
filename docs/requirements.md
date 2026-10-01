@@ -17,11 +17,13 @@ This objective is not replaced by an alpha scaffold or synthetic-only testing.
 | R7 agy | Applicable Google permission plus NDJSON/PTY/teams/session lifecycle acceptance | Legal hold, live tests pending |
 | R8 Codex feature continuity | AGENTS.md, skills, explicit memory context, plugins/MCP, worktrees, permissions, review | Design boundaries documented; live checks pending |
 | R9 Native Desktop experience | Progress, questions, approvals, stop, continuation, changes and native-team integration | No UI parity established |
-| R10 Reliability | Durable live state, timeout, reconnect, cancellation descendants, bounded storage, startup/auth/limit/drift handling | 186 tests and 74 subtests passed; full macOS daemon containment failed |
+| R10 Reliability | Durable live state, timeout, reconnect, cancellation descendants, bounded storage, startup/auth/limit/drift handling | 224 tests and 74 subtests passed; full macOS daemon containment failed |
 | R11 Publication | Secret review, independent code review, passing CI, public GitHub authoritative readback | Public alpha/review/readback and all four CI jobs passed at 6c52e94; full release readiness remains a separate gate |
-| R12 Install | Supported marketplace install, current Desktop readback, fresh-session tool/skill use | All five installed; native backend skills/tools discovered; Desktop chat/UI pending |
+| R12 Install | Supported marketplace install, current Desktop readback, fresh-session tool/skill use | All five alpha.3 installed; current Desktop chat invoked revalidate_cli; complete UI/native acceptance pending |
 | R13 Production readiness | All requested gates proven, limitations resolved or explicitly incompatible requirements addressed by user | Not achieved |
-| R14 Preserve defaults/budget | Native quota reads; no auth/payment/security/model/speed changes; 20pp reserve | Preserved so far |
+| R15 Repeated compatibility maintenance | Fresh current host/native/runtime observation, stale-evidence invalidation, current docs/policy review, affected fixes, full original acceptance and installed readback | Fresh observations, invalidation, guarded launch and installed CLI/stdio/current Desktop chat tool calls verified; full acceptance remains incomplete |
+| R16 Performance and comparative quality | Bounded probes/state/tool output; measured latency and task lifecycle; source-based competitor comparison on the same user scenarios | Not yet established |
+| R14 Preserve defaults/budget | Native quota reads; no auth/payment/security/model/speed changes; 20pp reserve | Auth/payment/security untouched by connector code; one global reasoning group changed during install interval with unestablished cause; reserve planning retained |
 
 ## Boundaries that cannot be declared solved by passing tests
 
@@ -42,3 +44,11 @@ with a second prompt, verify real denial/approval, cancel a deliberately long ha
 native/local termination, reconnect the MCP client, and run parallel isolated workspaces. Test native
 teams only where documented and enabled by existing policy. Inspect resulting changes in Desktop.
 Do not infer production readiness from process exit, a manifest, a passing fake CLI or source claims.
+
+## Expanded quality objective
+
+The user additionally requested the strongest lawful integration across completeness, UX, stability and
+performance. “Best in the world” is an aspiration, not an evidence-backed rank. It does not relax any
+original gate or permit bypassing vendor rules. Compare candidates on the same supported host/provider
+routes and observable scenarios. Report measured results and missing evidence rather than a global
+superiority claim. Prioritize correctness and safe lifecycle recovery before extra interfaces/features.

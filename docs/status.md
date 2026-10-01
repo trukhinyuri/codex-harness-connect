@@ -6,8 +6,8 @@ claims and generated artifacts.
 
 | Layer | Actual evidence | Limit |
 | --- | --- | --- |
-| Main regression suite | 186 tests and 74 subtests passed after the SQLite lifecycle and fault-fixture corrections on macOS/Python 3.14.7; Ruff passed | Synthetic processes/protocol fixtures; separate native acceptance gates remain |
-| Installed runtime | Clean venv with its own dependencies; all 12 module hashes match source; console/MCP request recovery, reconnect, input/EOF and completed worker cleanup passed | One local platform and synthetic child; no additional vendor inference |
+| Main regression suite | 224 tests and 74 subtests passed after compatibility maintenance and the SQLite lifecycle/fault-fixture corrections on macOS/Python 3.14.7; Ruff passed | Synthetic processes/protocol fixtures; separate native acceptance gates remain |
+| Installed runtime | Clean venv with its own dependencies; alpha.3 wheel: all 13 module hashes match source; real stdio MCP revalidation twice and CLI revalidation passed; earlier request/reconnect/EOF/cleanup smoke passed | One local platform and synthetic child; no additional vendor inference |
 | Claude native roundtrip | Claude Code 2.1.286: two exact replies, same-ID resume, then original reply recalled after MCP reconnect; empty workspace stayed empty | Three no-tool prompts; no approval/teams/file-edit/UI claim |
 | Claude status parser | Updated parser replayed all three recorded native stdout streams with verified identity/success, zero denials and parent-verification requirement | No new inference; actual native denial/rate-limit cases remain untested |
 | Lifecycle faults | Worker loss, cancellation, SQLite contention, bounded retention, request id recovery and profile isolation tested | Only kernel-observed processes |
@@ -15,12 +15,15 @@ claims and generated artifacts.
 | Grok | Official docs/source, installed 1.0.44 alpha help/inspect; prepared JSON contract | Native effective auth/model route and absence of paid fallback unproven; no inference |
 | GLM | Official supported-tool docs and subscription terms read; profile isolation design | Existing usable profile and this orchestration's use classification unverified; no inference |
 | agy/Hermes | Current Google docs/terms, installed1.2.14 help, pinned Hermes source | Applicable permission unresolved; no inference |
-| Local plugin installation | All five alpha.2 packages updated via supported CLI; app-server verified installed/enabled state, exact CLI display labels for plugins/skills and 12/11 MCP tools | Fresh Desktop chat/UI composition remains unverified; UI automation denied access to Codex |
+| Local plugin installation | All five alpha.3 packages updated via installed CLI; cache matches generated packages; current Desktop chat successfully invoked new revalidate_cli and discovers 13/12 MCP tools | Current chat tool invocation proved; full UI composition/interactions unverified; UI automation denied access to Codex |
 | Hosted CI | [Corrected fixture revision](https://github.com/trukhinyuri/codex-harness-connect/actions/runs/36822472887) passed all four macOS/Linux and Python 3.11/3.14 jobs, including Ruff, full suite and console version | Synthetic CI is not native vendor or Desktop UI qualification |
 
 Local account observations, absolute home paths, conversations and raw CLI readbacks are private and
-not published. Installation readback preserved all ten configuration groups outside plugins/marketplaces.
-The connector did not change auth, payment, permission, security or model defaults.
+not published. The earlier alpha.2 installation readback preserved all ten configuration groups outside plugins/marketplaces.
+During alpha.3, nine remained identical; one global reasoning setting differed from the baseline.
+The cause is not established and no automatic restoration was performed. Do not claim full default
+preservation for this interval. Connector code performs no auth/payment/security/model-default writes;
+installation uses the native CLI. Private configuration observations remain private.
 CLI auto-update changed the observed Claude version from 2.1.284 to 2.1.286; live evidence applies to
 2.1.286. Future versions require a new inventory and acceptance review.
 
@@ -39,8 +42,24 @@ Exact content review passed for the initial 53-file source alpha. The public
 through GitHub. All five local packages and their MCP servers were discovered by the native backend.
 This proves installation/backend discovery; full runtime and Desktop UI acceptance remain separate gates.
 
-Configured labels are `connect_cli`, `with_claude_cli`, `with_claude_cli_glm`, `with_grok_cli` and
-`with_agy_cli`. The native backend parsed them literally; the host controls any namespace prefix in its UI.
+Current configured labels are `connect_harness_cli`, `with_claude_cli`, `with_claude_cli_glm`, `with_grok_cli` and
+`with_agy_cli`. The installed alpha.3 manifests/skills match the generator and current host tool metadata uses the router label; the host controls any namespace prefix in its UI.
 
 Next: unresolved native acceptance/profile/policy/containment/UI gates.
 Preserve the full original objective. See [SQLite lifecycle evidence](sqlite-lifecycle.md).
+
+## Alpha.3 compatibility maintenance
+
+Repeated skill invocations now require fresh host/native/runtime observations, current source/terms review,
+affected fixes and all original acceptance gates. The observation itself keeps qualification incomplete.
+Tests cover executable replacement/symlink retargeting during probes, repeat missing/unknown evidence,
+private atomic state, output bounds, full-help drift and independent probe concurrency. Launch rejects
+missing mandatory stream/resume flags. See [maintenance procedure](revalidation.md).
+
+On the local macOS/Python 3.14 host, two installed stdio MCP observations took 0.511s and 0.403s with
+about 25 KiB responses; a current Desktop chat tool call completed in 5.191s. These are small observed
+samples, not throughput/p95 guarantees. CLI and current-host contexts can produce different help text
+and fingerprints. No new model inference was used in these checks. PATH and bundled Codex report
+0.159.2; installed Desktop metadata is 26.928.21956/build12404. The native updater reported an available
+26.928.31416/build12553, which was not installed or qualified. Loaded source/API, UI and newest-release
+compatibility must not be inferred from disk hashes or version metadata.

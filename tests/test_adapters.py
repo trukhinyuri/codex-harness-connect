@@ -63,9 +63,22 @@ def test_batch_refuses_untrusted_workspace_before_binary_probe(tmp_path):
 
 def test_batch_trust_acknowledgement_does_not_add_permission_flags(tmp_path):
     evidence = {"binary_sha256": "reviewed", "resolved_path": "/trusted/claude",
-                "help": {"exit_code": 0}, "version": {"exit_code": 0}, "flags": []}
+                "help": {"exit_code": 0}, "version": {"exit_code": 0},
+                "flags": ["--print", "--output-format", "--verbose"]}
     with patch("codex_harness_connect.adapters.inventory", return_value=evidence):
         contract = launch_contract("claude", "test", str(tmp_path), "batch", "reviewed",
                                    batch_workspace_confirmation=str(tmp_path.resolve()))
     assert contract["argv"] == ["/trusted/claude", "--print", "--output-format",
                                  "stream-json", "--verbose", "test"]
+
+
+@pytest.mark.parametrize("missing", ["--print", "--output-format", "--verbose", "--resume"])
+def test_launch_rejects_missing_native_protocol_flag_after_update(tmp_path, missing):
+    flags = {"--print", "--output-format", "--verbose", "--resume"} - {missing}
+    evidence = {"binary_sha256": "reviewed", "resolved_path": "/trusted/claude",
+                "help": {"exit_code": 0}, "version": {"exit_code": 0}, "flags": list(flags)}
+    with patch("codex_harness_connect.adapters.inventory", return_value=evidence):
+        with pytest.raises(ValueError, match="Native launch contract changed"):
+            launch_contract("claude", "test", str(tmp_path), "batch", "reviewed",
+                            native_session_id="known-native-id",
+                            batch_workspace_confirmation=str(tmp_path.resolve()))
