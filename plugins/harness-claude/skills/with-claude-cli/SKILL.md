@@ -28,6 +28,12 @@ changes are available. Use session_events(progress_only=true) for routine progre
 transcript, result text and hook output while preserving page cursors. Drain through unchanged cursor,
 even when a projected page contains no visible events. Use full transcript only for explicit scoped
 verification; never publish unrelated private native context. Waiting does not consume events.
+Choose timeout_seconds for the requested workload, including native startup and hooks. A previous
+Ultracode review took about 21 minutes: a 60-second deadline is unsuitable for comparable work.
+For comparable long reviews allow a bounded deadline such as 1800 seconds and observe progress with
+wait_sessions. This is workload guidance, not a universal minimum; honor explicit user deadlines.
+A timed_out job without a typed result is incomplete, not a native denial. Verify terminal state
+and never automatically relaunch a job whose outcome is uncertain.
 Keep OS job id and native conversation
 id separate. Choose and retain a fresh 32-character lowercase hex request_id before launching; recover an
 uncertain response with lookup_request. Never automatically restart a job whose outcome is uncertain.

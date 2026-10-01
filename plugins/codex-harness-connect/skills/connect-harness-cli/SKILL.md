@@ -73,6 +73,9 @@ subscription/route checks as a launch gate or require plan/billing confirmation.
 optional sanitized login diagnostic, not effective-route attestation or launch authorization.
 Explicit invocation authorizes scoped native work; the CLI handles its own authentication and errors.
 Do not inject a model, provider, API fallback or settings override. Native permissions remain separate.
+Choose the session deadline for the requested workload, including CLI startup and hooks. Keep wait
+deadlines separate from the native session timeout; poll progress without shortening a long task.
+Follow the provider skill for workload-specific guidance; a timeout is not a native permission denial.
 Use native interactive mode for native terminal/teams features;
 TTY text is not the Codex internal subagent UI. Never add yolo or permission-bypass options, extract
 auth tokens, read hidden memory, introduce a paid fallback or share credentials. Observing an existing
