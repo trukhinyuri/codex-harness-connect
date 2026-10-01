@@ -11,6 +11,7 @@ from codex_harness_connect import sessions
 from codex_harness_connect.sessions import SessionService, connect_db, process_identity
 
 TERMINAL = {"completed", "failed", "cancelled", "timed_out", "lost"}
+BURST_DONE = "\nRETENTION_BURST_DONE\n"
 
 
 def wait_for(predicate, seconds=8):
@@ -29,6 +30,25 @@ def captured(path):
         return json.loads(path.read_text())
     except (FileNotFoundError, ValueError):
         return None
+
+
+def wait_for_burst(service, sid):
+    cursor = 0
+    tail = ""
+
+    def drained():
+        nonlocal cursor, tail
+        result = service.status(sid, after=cursor, limit=1000)
+        cursor = result["next_cursor"]
+        for item in result["events"]:
+            combined = tail + item["data"].get("text", "")
+            if BURST_DONE in combined:
+                return result
+            tail = combined[-len(BURST_DONE):]
+        assert result["session"]["status"] not in TERMINAL, "Native tree exited before the burst drained"
+        return None
+
+    return wait_for(drained)
 
 
 def kill_exact(info):
@@ -50,7 +70,8 @@ def tree(service, tmp_path):
         "import os,signal,subprocess,sys,time; "
         "signal.signal(signal.SIGTERM,signal.SIG_IGN); "
         f"subprocess.Popen([sys.executable,'-c',{child_code!r}]); "
-        "[os.write(1,b'x'*4096) for _ in range(1800)]; time.sleep(60)"
+        "[os.write(1,b'x'*4096) for _ in range(1800)]; "
+        f"os.write(1,{BURST_DONE.encode()!r}); time.sleep(60)"
     )
     job = service.start([sys.executable, "-c", code], str(tmp_path), timeout_seconds=20)
     descendant = wait_for(lambda: captured(capture))
@@ -59,7 +80,7 @@ def tree(service, tmp_path):
 
 
 def bounded_state(service, sid):
-    with connect_db(service.state_root) as db:
+    with sessions.session_db(service.state_root) as db:
         count = db.execute("SELECT COUNT(*) FROM events WHERE session_id=?", (sid,)).fetchone()[0]
         total = db.execute("SELECT COUNT(*) FROM events").fetchone()[0]
     assert count <= sessions.MAX_EVENTS and total <= sessions.MAX_TOTAL_EVENTS
@@ -75,8 +96,22 @@ def test_database_lock_after_launch_kills_native_tree_and_preserves_unknown_resu
     native = {"pid": job["child_pid"], "start": job["child_start"]}
     lock = connect_db(service.state_root)
     try:
-        wait_for(lambda: service.status(sid)["session"]["discarded_until"] > 0)
-        lock.execute("BEGIN IMMEDIATE")
+        ready = wait_for_burst(service, sid)
+        assert ready["session"]["discarded_until"] > 0
+        assert ready["session"]["status"] == "running"
+        assert process_identity(native["pid"]) == native["start"]
+        assert process_identity(descendant["pid"]) == descendant["start"]
+        # The persisted tail marker proves the worker consumed the full burst.
+        # Only periodic heartbeats now compete with this one bounded attempt.
+        # This injector timeout is separate from the worker's unchanged 100ms.
+        lock.execute("PRAGMA busy_timeout=1000")
+        try:
+            lock.execute("BEGIN IMMEDIATE")
+        except sqlite3.OperationalError as exc:
+            exc.add_note(f"Fault lock not acquired: SQLite {sqlite3.sqlite_version}; "
+                         f"code={exc.sqlite_errorcode}; name={exc.sqlite_errorname}")
+            raise
+        assert lock.in_transaction, "Shutdown must be tested while the fault lock is held"
         # Release is deliberately later than worker busy_timeout and its error
         # recording attempt. Native safety must not depend on unlocking SQLite.
         wait_for(lambda: process_identity(native["pid"]) != native["start"]
@@ -136,7 +171,7 @@ def test_scaled_global_and_per_session_retention_keep_monotonic_reconnect(tmp_pa
     monkeypatch.setattr(sessions, "MAX_EVENTS", 8)
     monkeypatch.setattr(sessions, "MAX_TOTAL_EVENTS", 16)
     ids = [uuid.uuid4().hex for _ in range(3)]
-    with connect_db(service.state_root) as db:
+    with sessions.session_db(service.state_root) as db:
         for sid in ids:
             db.execute("INSERT INTO sessions(session_id,status,mode,cwd,executable,created_at) "
                        "VALUES(?,?,?,?,?,?)", (sid, "completed", "pipe", str(tmp_path),

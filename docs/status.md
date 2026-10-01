@@ -6,8 +6,8 @@ claims and generated artifacts.
 
 | Layer | Actual evidence | Limit |
 | --- | --- | --- |
-| Main regression suite | 186 tests and 74 subtests passed after the SQLite lifecycle correction on macOS/Python 3.14.7; Ruff passed | Synthetic processes/protocol fixtures; updated hosted CI pending |
-| Claude installed package | Built wheel installed into a clean venv with its own dependencies; console/MCP handshake succeeded | One local platform |
+| Main regression suite | 186 tests and 74 subtests passed after the SQLite lifecycle and fault-fixture corrections on macOS/Python 3.14.7; Ruff passed | Synthetic processes/protocol fixtures; updated hosted CI pending |
+| Installed runtime | Clean venv with its own dependencies; all 12 module hashes match source; console/MCP request recovery, reconnect, input/EOF and completed worker cleanup passed | One local platform and synthetic child; no additional vendor inference |
 | Claude native roundtrip | Claude Code 2.1.286: two exact replies, same-ID resume, then original reply recalled after MCP reconnect; empty workspace stayed empty | Three no-tool prompts; no approval/teams/file-edit/UI claim |
 | Claude status parser | Updated parser replayed all three recorded native stdout streams with verified identity/success, zero denials and parent-verification requirement | No new inference; actual native denial/rate-limit cases remain untested |
 | Lifecycle faults | Worker loss, cancellation, SQLite contention, bounded retention, request id recovery and profile isolation tested | Only kernel-observed processes |
@@ -15,8 +15,8 @@ claims and generated artifacts.
 | Grok | Official docs/source, installed 1.0.44 alpha help/inspect; prepared JSON contract | Native effective auth/model route and absence of paid fallback unproven; no inference |
 | GLM | Official supported-tool docs and subscription terms read; profile isolation design | Existing usable profile and this orchestration's use classification unverified; no inference |
 | agy/Hermes | Current Google docs/terms, installed1.2.14 help, pinned Hermes source | Applicable permission unresolved; no inference |
-| Local plugin installation | All five packages installed via supported CLI; app-server verified installed/enabled state, skills and 12/11 MCP tools | Fresh Desktop chat/UI acceptance remains unverified; UI automation denied access to Codex |
-| Hosted CI | First four macOS/Linux and Python 3.11/3.14 jobs failed on two session tests with SQLite disk I/O errors | A separately reproduced lock/lifetime defect has a candidate fix; new hosted result required |
+| Local plugin installation | All five alpha.2 packages updated via supported CLI; app-server verified installed/enabled state, exact CLI display labels for plugins/skills and 12/11 MCP tools | Fresh Desktop chat/UI composition remains unverified; UI automation denied access to Codex |
+| Hosted CI | [Naming revision](https://github.com/trukhinyuri/codex-harness-connect/actions/runs/36822184413) passed all four macOS/Linux and Python 3.11/3.14 jobs after the SQLite correction | Previous rerun exposed a fault-lock setup race; synchronized fixture still awaits hosted readback |
 
 Local account observations, absolute home paths, conversations and raw CLI readbacks are private and
 not published. Installation readback preserved all ten configuration groups outside plugins/marketplaces.
@@ -39,5 +39,9 @@ Exact content review passed for the initial 53-file source alpha. The public
 through GitHub. All five local packages and their MCP servers were discovered by the native backend.
 This proves installation/backend discovery; full runtime and Desktop UI acceptance remain separate gates.
 
-Next: SQLite fix verification/CI, then unresolved native acceptance/profile/policy/containment/UI gates.
+Configured labels are `connect_cli`, `with_claude_cli`, `with_claude_cli_glm`, `with_grok_cli` and
+`with_agy_cli`. The native backend parsed them literally; the host controls any namespace prefix in its UI.
+
+Next: hosted verification of the synchronized fault fixture, then unresolved native acceptance/profile/
+policy/containment/UI gates.
 Preserve the full original objective. See [SQLite lifecycle evidence](sqlite-lifecycle.md).

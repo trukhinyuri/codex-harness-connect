@@ -17,5 +17,15 @@ the worker keeps its separately owned long-lived connection and explicit cleanup
 or retried, and no SQLite safety setting is disabled.
 
 Four discriminating tests failed against the original code; the corrected runtime/fault/connection suite
-passed 39 tests locally. A new hosted run is still required before claiming the CI symptom is resolved.
+passed 39 tests locally. The next hosted run passed both original failing tests on all four platforms.
+Three complete jobs passed; macOS/Python 3.14 stopped in a different fault test before acquiring its
+injected writer lock, reporting `database is locked` rather than the original disk I/O error.
+
+The fixture only waited for retention to begin, allowing its lock attempt to overlap the output burst. It now
+waits for the persisted tail marker, confirms the live native process identities, makes one bounded
+lock attempt, and asserts an active transaction before checking shutdown. Only the injector's wait
+increases to one second; the production worker's 100ms busy timeout is unchanged. Failure remains fatal
+and reports the SQLite version and extended code. The new hosted result remains an acceptance gate.
+The naming revision's subsequent run passed all four jobs before this synchronization change;
+the setup failure is intermittent, so that pass does not replace qualification of the corrected fixture.
 This correction does not solve the separately documented macOS daemon-containment limitation.
