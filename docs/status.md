@@ -15,7 +15,7 @@ claims and generated artifacts.
 | Grok | Official docs/source, installed 1.0.44 alpha help/inspect; prepared JSON contract | Native effective auth/model route and absence of paid fallback unproven; no inference |
 | GLM | Official supported-tool docs and subscription terms read; profile isolation design | Existing usable profile and this orchestration's use classification unverified; no inference |
 | agy/Hermes | Current Google docs/terms, installed1.2.14 help, pinned Hermes source | Applicable permission unresolved; no inference |
-| Local plugin installation | All five alpha.5 packages updated via installed CLI; 20 cache files match generated packages; fresh stdio catalogs expose 15 router/14 scoped tools. Earlier alpha.4 current-chat wait/revalidate invocation remains verified; immediately after alpha.5 installation this chat still returned the old list schema | Alpha.5 installed stdio proved; current-chat alpha.5 API reload and full native UI interactions unverified. UI automation denied access to Codex |
+| Local plugin installation | All five alpha.5 packages updated via installed CLI; 20 cache files match generated packages; fresh stdio catalogs expose 15 router/14 scoped tools. After catalog refresh, the current Desktop chat invoked alpha.5 storage_status in all five scopes and router history pagination plus fresh revalidation | Alpha.5 installed stdio and current-chat new API loading/invocation proved; full native UI interactions unverified. UI automation denied access to Codex |
 | Hosted CI | [Alpha.4 runtime revision](https://github.com/trukhinyuri/codex-harness-connect/actions/runs/36830383639) passed all four macOS/Linux and Python 3.11/3.14 jobs. Check the exact current revision in the [CI runs](https://github.com/trukhinyuri/codex-harness-connect/actions/workflows/ci.yml) | Synthetic CI is not native vendor or Desktop UI qualification |
 
 Local account observations, absolute home paths, conversations and raw CLI readbacks are private and
@@ -109,5 +109,13 @@ over-budget reporting. No unlimited admission, physical disk envelope or full up
 promised. See [storage and recovery](storage.md). Actual local source/runtime SQLite reports 3.53.4;
 the [upstream WAL-reset fix](https://sqlite.org/wal.html) applies since 3.51.3 or documented
 backports. This local observation does not qualify every CI/user Python build. Native approvals/teams,
-provider policy/profile routes, current Desktop UI/API reload, Cloud and full macOS containment remain
+provider policy/profile routes, full native Desktop UI, Cloud and full macOS containment remain
 open. The strongest-in-the-world ambition is not a proven comparative ranking.
+
+After the initial old-schema readback, the current Desktop chat's catalog refreshed. All five
+storage_status calls returned the new alpha.5 schema in 0.934–0.938s; router history returned explicit
+paging metadata. Fresh router revalidation took 7.192s, observed the new runtime/API fingerprint and
+kept qualification incomplete. These calls prove new API loading and read behavior in this chat, not
+native provider tasks, progress/approval rendering or UI parity. The alpha.5 runtime commit's
+[CI run](https://github.com/trukhinyuri/codex-harness-connect/actions/runs/36836820502) passed all four
+macOS/Linux and Python 3.11/3.14 jobs; later documentation revisions have their own exact-revision CI.
