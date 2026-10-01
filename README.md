@@ -12,6 +12,8 @@ worktrees. A research skill inventories the installed version and requires prima
 terms review, capability evidence and real acceptance tests before a new harness is labelled ready.
 The [cursor wait tool](docs/waiting.md) observes up to eight existing jobs with compact responses;
 transcripts are read explicitly when events become available.
+The [interaction check](docs/native-interaction-contract.md) tests a connected client's standard
+MCP question form without launching a model or granting native tool permission.
 
 Requested adapters are Claude Code, Claude Code with GLM Coding Plan, official Grok Build and official
 Antigravity `agy`. These are separate contracts. ZCode's desktop agent is not the Claude executable.

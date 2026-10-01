@@ -1,6 +1,6 @@
 {
   "name": "harness-claude-glm",
-  "version": "0.1.0-alpha.5",
+  "version": "0.1.0-alpha.6",
   "description": "Claude Code + an existing GLM Coding Plan configuration is distinct from ZCode. This project's orchestration classification needs vendor confirmation.",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",

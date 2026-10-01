@@ -39,7 +39,9 @@ proof that the projects cannot be improved. OpenAI protocol support does not end
    Reject stale/replayed IDs and require explicit user answers. Unknown terminal text remains unverified.
    Validate real deny/approve behavior and supported Desktop rendering on permitted provider routes.
    The [native interaction contract](native-interaction-contract.md) defines the supported route and
-   remaining wire/UI evidence; it is not an enabled approval bridge.
+   remaining wire/UI evidence. Alpha.6 tests the standard form route with a separate no-action diagnostic;
+   it remains insufficient to enable a native approval bridge. [Claude findings](claude-consent.md)
+   distinguish the SDK callback candidate from the constrained MCP permission host.
 3. Truthful ownership/cleanup: distinguish native turn completion, leader exit, observed-tree cleanup
    and full OS containment. Re-run the exact escaped-daemon acceptance plus worker loss/PID reuse and
    an unrelated sentinel. A successful cancel acknowledgement is not proof of full cleanup.

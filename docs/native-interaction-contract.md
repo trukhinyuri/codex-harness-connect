@@ -1,7 +1,23 @@
 # Native questions and external consent
 
-Research observed 2026-10-01. This is the next implementation contract, not an enabled alpha.4 feature.
-The installed connector currently provides durable events, cursor waiting and explicit terminal input.
+Observed 2026-10-01. Alpha.6 adds a standard-form diagnostic; the native consent bridge remains closed.
+Durable events, cursor waiting and explicit terminal input continue to provide the current job workflow.
+
+## Check this connected client
+
+Call `check_interaction` during an interactive session. The connector checks the client's advertised
+form capability before showing a required, non-sensitive choice. URL-only and absent capabilities return
+`unsupported`. Accept requires an exact enum value; an empty or malformed answer returns `invalid_response`.
+Decline, cancel and timeout remain separate outcomes. A response received after the deadline is expired.
+The default timeout is 45 seconds, and callers may shorten it. Caller cancellation propagates. Async
+cancellation is cooperative, so slow cancellation cleanup can extend the observed duration.
+
+This diagnostic launches no CLI or model, changes no settings and stores no answer in connector state.
+The host may retain the exchange in chat history. `form_visible` reports the received choice; it cannot
+attest that a human answered. MCP agent clients can generate answers themselves. The result grants no
+native tool permission and must never serve as a reusable approval or enable a held provider route.
+Fixtures and real stdio protocol tests cover its wire behavior; current Desktop/CLI rendering requires
+separate host acceptance. Cloud also needs its own deployed server and client test.
 
 OpenAI documents [MCP form elicitation](https://learn.chatgpt.com/docs/app-server#mcp-server-elicitation-requests).
 The installed 0.159.2 schemas expose its form requests and `item/mcpToolCall/progress`; shipped Codex
@@ -9,11 +25,21 @@ Security tool metadata also describes standard form elicitation for interactive 
 schema presence nor another plugin's metadata proves this connector's rendering or negotiated capability.
 Codex's own command/file/permission approvals remain separate from external-agent consent.
 
+The pinned [Codex 0.159.2 handler](https://github.com/openai/codex/blob/ff6aec96948b70d94983af2641a6b67c94faeff5/codex-rs/core/src/session/mcp.rs)
+forwards ordinary form requests through its elicitation event. Several policy paths can instead return
+an empty acceptance or decline. The diagnostic requires a nonempty exact choice and therefore rejects
+empty acceptance. It does not imitate private approval metadata or infer who supplied a response.
+This connector keeps the qualified MCP 1.30.0 dependency. The
+[2026-07-28 migration](https://ts.sdk.modelcontextprotocol.io/v2/migration/support-2026-07-28)
+introduces a different input-required contract; adopting that version requires separate protocol and
+host acceptance rather than an automatic dependency update.
+
 Claude documents [non-interactive MCP permission hosts](https://code.claude.com/docs/en/cli-reference)
 and [SDK questions/approval callbacks](https://code.claude.com/docs/en/agent-sdk/user-input). A documented
 flag is insufficient evidence for its complete payload, native request identity and cancellation
 semantics on the installed version. Do not infer requests from TUI text or hand-build undocumented
-CLI control RPC. Native teams still require their own interactive contract.
+CLI control RPC. [Current Claude findings](claude-consent.md) identify the official SDK callback candidate
+and the permission-host limitation. Native teams still require their own interactive contract.
 
 ## Proposed broker and acceptance
 

@@ -6,8 +6,8 @@ claims and generated artifacts.
 
 | Layer | Actual evidence | Limit |
 | --- | --- | --- |
-| Main regression suite | 343 tests and 74 subtests passed on macOS/Python 3.14.7; final alpha.5 affected suites passed (85 lifecycle/revalidation/MCP tests and 21 generation/adapter tests); Ruff passed | Synthetic processes/protocol fixtures; separate native acceptance gates remain |
-| Installed runtime | Clean noneditable alpha.5 wheel: all 16 module hashes match source; real stdio MCP capacity/replay/paging/cancellation/durable-outcome-after-eviction/reconnect checks passed | One local platform and synthetic child; no additional vendor inference |
+| Main regression suite | 400 tests and 74 subtests passed on macOS/Python 3.14.7; 94 affected interaction/generation/revalidation tests passed; Ruff passed | Synthetic processes/protocol fixtures; separate native acceptance gates remain |
+| Installed runtime | Noneditable alpha.6 wheel: all 17 module hashes match source; five catalogs and four form-protocol cases passed. Alpha.5 storage/recovery checks remain recorded below | One local platform, synthetic answering client; no additional vendor inference |
 | Claude native roundtrip | Claude Code 2.1.286: two exact replies, same-ID resume, then original reply recalled after MCP reconnect; empty workspace stayed empty | Three no-tool prompts; no approval/teams/file-edit/UI claim |
 | Claude status parser | Updated parser replayed all three recorded native stdout streams with verified identity/success, zero denials and parent-verification requirement | No new inference; actual native denial/rate-limit cases remain untested |
 | Lifecycle faults | Worker loss, cancellation, SQLite contention, bounded retention, request id recovery and profile isolation tested | Only kernel-observed processes |
@@ -15,7 +15,7 @@ claims and generated artifacts.
 | Grok | Official docs/source, installed 1.0.44 alpha help/inspect; prepared JSON contract | Native effective auth/model route and absence of paid fallback unproven; no inference |
 | GLM | Official supported-tool docs and subscription terms read; profile isolation design | Existing usable profile and this orchestration's use classification unverified; no inference |
 | agy/Hermes | Current Google docs/terms, installed1.2.14 help, pinned Hermes source | Applicable permission unresolved; no inference |
-| Local plugin installation | All five alpha.5 packages updated via installed CLI; 20 cache files match generated packages; fresh stdio catalogs expose 15 router/14 scoped tools. After catalog refresh, the current Desktop chat invoked alpha.5 storage_status in all five scopes and router history pagination plus fresh revalidation | Alpha.5 installed stdio and current-chat new API loading/invocation proved; full native UI interactions unverified. UI automation denied access to Codex |
+| Local plugin installation | All five alpha.6 packages updated via installed CLI; 20 cache files match generated packages; fresh stdio catalogs expose 16 router/15 scoped tools. Current Desktop loaded all five interaction tool definitions, invoked one check and fresh revalidation | The form call returned cancel with no choice; actual rendering and native consent acceptance remain separate. UI automation denied access to Codex |
 | Hosted CI | [Alpha.4 runtime revision](https://github.com/trukhinyuri/codex-harness-connect/actions/runs/36830383639) passed all four macOS/Linux and Python 3.11/3.14 jobs. Check the exact current revision in the [CI runs](https://github.com/trukhinyuri/codex-harness-connect/actions/workflows/ci.yml) | Synthetic CI is not native vendor or Desktop UI qualification |
 
 Local account observations, absolute home paths, conversations and raw CLI readbacks are private and
@@ -46,10 +46,38 @@ through GitHub. All five local packages and their MCP servers were discovered by
 This proves installation/backend discovery; full runtime and Desktop UI acceptance remain separate gates.
 
 Current configured labels are `connect_harness_cli`, `with_claude_cli`, `with_claude_cli_glm`, `with_grok_cli` and
-`with_agy_cli`. The installed alpha.5 manifests/skills match the generator and current host tool metadata uses the router label; the host controls any namespace prefix in its UI.
+`with_agy_cli`. The installed alpha.6 manifests/skills match the generator and current host tool metadata uses these labels; the host controls any namespace prefix in its UI.
 
 Next: unresolved native acceptance/profile/policy/containment/UI gates.
 Preserve the full original objective. See [SQLite lifecycle evidence](sqlite-lifecycle.md).
+
+## Alpha.6 form and consent qualification
+
+`check_interaction` qualifies the connected client's advertised standard-form route without launching a
+CLI/model or granting permission. Required enum answers have no default; empty, malformed and expired
+acceptance cannot pass. Decline/cancel/timeout remain distinct; caller cancellation propagates. The
+connector stores no answer, and the host may retain the exchange. Accepted content does not attest to a
+human. See the [interaction contract](native-interaction-contract.md).
+
+Independent tests found and fixed integer protocol metadata handling, null unknown capabilities and
+late acceptance during timeout cleanup. Real stdio tests also found and fixed MCP 1.30's rejection of
+Literal annotations. Installed wheel tests verify the required enum wire and all five scopes; no AI
+requests were used. Independent review found no remaining actionable defect in this diagnostic.
+
+The current Desktop client advertises form support and identifies as `codex-mcp-client` 0.159.2. One
+actual call returned `cancelled` without a choice in 0.002 seconds of server time. This records the
+protocol result; it does not establish that a person saw or closed a form. Render acceptance requires
+an observed usable form and answer. Fresh revalidation detected changed source/package/API/target
+evidence and kept qualification incomplete. The observed Claude version remains 2.1.286.
+
+All five installation intervals preserved the ten configuration groups outside plugins/marketplaces.
+This preserves each interval's starting settings, rather than explaining or restoring the earlier
+reasoning-setting drift. The prior marketplace and wheels remain available for rollback.
+
+Current [Claude source findings](claude-consent.md) identify the official SDK callback candidate and
+the MCP permission-host limitation. Public-plugin SDK subscription classification and native
+deny/approve/question/cancel tests remain enablement dependencies. No SDK or provider route was enabled.
+The full original production, teams, Cloud and containment gates remain open.
 
 ## Alpha.3 compatibility maintenance
 

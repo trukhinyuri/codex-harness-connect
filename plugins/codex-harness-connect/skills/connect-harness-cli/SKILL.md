@@ -29,6 +29,9 @@ creating duplicate plugins. Never silently reduce the task to inventory or synth
    supported improvements. Review code, package/schema and dependency drift, not only version strings.
 5. Explain host boundaries: Codex memory, plugins, context and skills stay with Codex; only explicitly
    supplied task context reaches the child. Codex sandbox/approvals are not automatically inherited.
+   When the task needs form-based questions, use check_interaction to qualify this connected client's
+   advertised standard form route. It launches no native CLI or model. An accepted check does not
+   attest to a human or approve native work. Do not enable an unqualified consent bridge from it.
 6. If the repository destination is absent, ask for it before publishing; local reversible work can continue.
    Use the user-requested repository/name when already provided. Never publish transcripts or credentials.
 7. Implement and test the adapter/package corrections in the existing project. Use reviewed staging and

@@ -4,12 +4,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Annotated
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import Context, FastMCP
 from mcp.types import ToolAnnotations
 from pydantic import Field
 
 from .adapters import ADAPTERS, get_adapter, launch_contract
 from .discovery import inventory
+from .elicitation import check_interaction as run_interaction_check
 from .history import list_history
 from .revalidation import revalidate
 from .sessions import SessionService
@@ -174,6 +175,20 @@ def build_server(state_root: Path, profile: str | None = None) -> FastMCP:
     def storage_status(adapter: str) -> dict:
         """Read capacity, logical event budgets and measured DB/WAL bytes; no cleanup."""
         return pools[selected(adapter)].storage_status()
+
+    @server.tool(annotations=READ)
+    async def check_interaction(
+        ctx: Context,
+        timeout_seconds: Annotated[float, Field(strict=True, gt=0, le=45, allow_inf_nan=False)] = 45,
+    ) -> dict:
+        """Check standard MCP question forms in this client; no model, auth or native action.
+
+        Displays a non-sensitive required-choice form only when this client advertises form
+        support. Decline, cancel, timeout and empty answers remain distinct. A valid answer
+        does not attest to a human or grant permission to any external CLI. The connector does
+        not store the answer; the host may retain this tool exchange in its chat history.
+        """
+        return await run_interaction_check(ctx, timeout_seconds)
 
     @server.tool(annotations=WRITE)
     def send_input(session_id: str, text: str) -> dict:
