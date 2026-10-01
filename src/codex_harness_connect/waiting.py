@@ -85,7 +85,8 @@ def _summary(target: WaitTarget, result: Any) -> dict:
             raise ValueError("Status reader returned an event for a different session")
     next_cursor = result.get("next_cursor")
     if (type(next_cursor) is not int
-            or next_cursor != (pending if pending is not None else target.after)):
+            or (next_cursor != (pending if pending is not None else target.after)
+                and not (pending is None and truncated and next_cursor > target.after))):
         raise ValueError("Status reader returned an inconsistent next cursor")
     known = status in _ACTIVE or status in TERMINAL
     semantic = session.get("semantic_status")

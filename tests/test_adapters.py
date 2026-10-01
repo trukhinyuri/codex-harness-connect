@@ -27,13 +27,13 @@ def test_native_argument_injection_is_rejected():
 @pytest.mark.parametrize("profile", ["agy", "claude-glm", "grok"])
 def test_policy_holds_are_not_bypassable(profile, tmp_path):
     with pytest.raises(PermissionError):
-        launch_contract(profile, "test", str(tmp_path), "batch", "arbitrary")
+        launch_contract(profile, "test", str(tmp_path), "interactive", "arbitrary")
 
 
 def test_marketplace_has_every_requested_profile(tmp_path):
     result = generate_marketplace(tmp_path)
     assert {p["name"] for p in result["plugins"]} == {
-        "codex-harness-connect", "harness-claude", "harness-claude-glm", "harness-grok", "harness-agy"}
+        "codex-harness-connect", "harness-claude", "harness-grok", "harness-agy"}
     for p in result["plugins"]:
         assert (Path(p["path"]) / ".mcp.json").is_file()
     with pytest.raises(FileExistsError):
@@ -66,12 +66,12 @@ def test_batch_trust_acknowledgement_does_not_add_permission_flags(tmp_path):
                 "help": {"exit_code": 0}, "version": {"exit_code": 0},
                 "flags": ["--print", "--output-format", "--verbose"]}
     with patch("codex_harness_connect.adapters.inventory", return_value=evidence), \
-            patch("codex_harness_connect.adapters.require_subscription_route") as auth:
+            patch("codex_harness_connect.auth.require_subscription_route") as auth:
         contract = launch_contract("claude", "test", str(tmp_path), "batch", "reviewed",
                                    batch_workspace_confirmation=str(tmp_path.resolve()))
     assert contract["argv"] == ["/trusted/claude", "--print", "--output-format",
                                  "stream-json", "--verbose", "test"]
-    auth.assert_called_once_with("/trusted/claude", str(tmp_path.resolve()), "reviewed")
+    auth.assert_not_called()
 
 
 @pytest.mark.parametrize("missing", ["--print", "--output-format", "--verbose", "--resume"])
@@ -84,3 +84,33 @@ def test_launch_rejects_missing_native_protocol_flag_after_update(tmp_path, miss
             launch_contract("claude", "test", str(tmp_path), "batch", "reviewed",
                             native_session_id="known-native-id",
                             batch_workspace_confirmation=str(tmp_path.resolve()))
+
+
+@pytest.mark.parametrize("mode,native_id", [("interactive", None), ("batch", None),
+                                           ("batch", "verified-id")])
+@pytest.mark.parametrize("prompt", ["update", "install", "doctor", "mcp", "setup-token"])
+def test_prompt_cannot_dispatch_native_command(tmp_path, mode, native_id, prompt):
+    evidence = {"binary_sha256": "reviewed", "resolved_path": "/trusted/claude",
+                "help": {"exit_code": 0}, "version": {"exit_code": 0},
+                "flags": ["--print", "--output-format", "--verbose", "--resume"]}
+    with patch("codex_harness_connect.adapters.inventory", return_value=evidence), \
+            patch("codex_harness_connect.auth.require_subscription_route") as auth:
+        with pytest.raises(ValueError, match="native CLI command"):
+            launch_contract("claude", prompt, str(tmp_path), mode, "reviewed", native_id,
+                            batch_workspace_confirmation=str(tmp_path))
+        auth.assert_not_called()
+        contract = launch_contract("claude", prompt + " the changelog", str(tmp_path),
+                                   mode, "reviewed", native_id,
+                                   batch_workspace_confirmation=str(tmp_path))
+        assert contract["argv"][-1] == prompt + " the changelog"
+
+
+def test_only_native_reviewed_permission_overrides_are_accepted():
+    flag = "--permission-mode"
+    assert validate_options([flag + "=default"], [flag]) == [flag + "=default"]
+    assert validate_options([flag + "=auto"], [flag]) == [flag + "=auto"]
+    for value in ("bypassPermissions", "acceptEdits", "dontAsk", "plan", "manual", ""):
+        with pytest.raises(ValueError):
+            validate_options([flag + "=" + value], [flag])
+    with pytest.raises(ValueError):
+        validate_options([flag + "=default"], [])

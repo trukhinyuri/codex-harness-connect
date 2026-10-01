@@ -10,9 +10,9 @@ This objective is not replaced by an alpha scaffold or synthetic-only testing.
 | --- | --- | --- |
 | R1 agy/Hermes research | Current Google docs/terms, pinned Hermes source, installed CLI probes | Docs/probes obtained |
 | R2 Universal discovery | Installed binary identity, recursive command/feature map, official docs dossier and contradictions | Top-level inventory only |
-| R3 Adapter authoring | Research-driven packages, repo destination handling, repeatable validation | Five packages generated with guarded, transactional authoring; incomplete recursive dossiers/code generation |
+| R3 Adapter authoring | Research-driven packages, repo destination handling, repeatable validation | Four current packages generated with transactional authoring; incomplete recursive dossiers/code generation |
 | R4 Claude | Native login, stream parsing, PTY approvals, resume, cancellation, teams, skills/plugins/MCP | Native reply/resume/history and alpha.8 two-file Read acceptance proved on 2.1.286; approvals/teams/file changes pending |
-| R5 Claude+GLM | Existing approved profile, provider/model evidence, auth isolation, same lifecycle gates | Pending configuration/legal evidence |
+| R5 Claude+GLM | User superseded the separate-profile requirement on 2026-10-01 | Separate plugin removed; one Claude CLI follows its existing native model/provider; lifecycle gates remain R4 |
 | R6 Grok Build | Native auth entitlement, ACP capabilities/approvals, streams, resume, cancellation/subagents | Pending |
 | R7 agy | Applicable Google permission plus NDJSON/PTY/teams/session lifecycle acceptance | Legal hold, live tests pending |
 | R8 Codex feature continuity | AGENTS.md, skills, explicit memory context, plugins/MCP, worktrees, permissions, review | Explicit fixture AGENTS.md context verified through native Read; remaining transfer/continuity checks pending |

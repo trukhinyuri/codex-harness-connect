@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from .auth import require_subscription_route
 from .discovery import inventory
 
 Mode = Literal["batch", "interactive"]
@@ -48,7 +47,7 @@ ADAPTERS = {
         ("https://code.claude.com/docs/en/legal-and-compliance",
          "https://code.claude.com/docs/en/cli-reference",
          "https://code.claude.com/docs/en/agent-teams"),
-        "Own-account unmodified CLI. Subscription login must stay inside Claude Code. "
+        "Own-account unmodified CLI using its current configured model and provider. Auth stays inside Claude Code. "
         "Headless teams are not supported; use interactive sessions for native teams.",
         help_transport="pty",
     ),
@@ -90,6 +89,11 @@ def validate_options(options: list[str], known_flags: list[str]) -> list[str]:
         if not option.startswith("--") or "\x00" in option or len(option) > 32_768:
             raise ValueError("Native options require --flag or --flag=value form")
         flag = option.split("=", 1)[0]
+        if flag == "--permission-mode" and option in {"--permission-mode=default", "--permission-mode=auto"}:
+            if flag not in known_flags:
+                raise ValueError("Safe native permission mode absent from installed help")
+            result.append(option)
+            continue
         if flag in BLOCKED_FLAGS | OWNED_FLAGS:
             raise ValueError(f"{flag} requires a reviewed dedicated integration or is forbidden")
         if flag not in known_flags:
@@ -152,12 +156,14 @@ def launch_contract(
     # A positional prompt beginning with '-' could be interpreted as a CLI option.
     if prompt.startswith("-"):
         raise ValueError("Prompt must not start with '-' (ambiguous native CLI option)")
+    if prompt.strip() in {"auth", "install", "update", "upgrade", "doctor", "mcp",
+                          "setup-token", "plugin", "plugins", "agents", "remote-control"}:
+        raise ValueError("Prompt must not equal a native CLI command")
     argv.append(prompt)
-    require_subscription_route(current["resolved_path"], str(directory), expected_sha256)
     return {
         "argv": argv, "cwd": str(directory), "mode": "pipe" if mode == "batch" else "pty",
         "adapter": name, "identity": current["binary_sha256"],
         "protocol": "claude-stream-json" if mode == "batch" else None,
-        "auth_preflight": {"kind": "claude-own-subscription", "expected_sha256": expected_sha256},
+        "auth_preflight": None,
         "permissions": "Native CLI policies apply; Codex sandbox is not inherited by assertion",
     }

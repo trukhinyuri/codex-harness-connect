@@ -122,22 +122,19 @@ def test_auth_tool_is_only_exposed_for_reviewed_native_command(tmp_path, profile
             "adapter", "cwd", "expected_sha256"}
 
 
-def test_auth_hold_is_reported_before_session_service_spawn(tmp_path):
-    server = build_server(tmp_path / "state", "claude")
+def test_claude_preserves_current_native_route_without_auth_gate(tmp_path):
+    from codex_harness_connect.adapters import launch_contract
     evidence = {"binary_sha256": "a" * 64, "resolved_path": "/trusted/claude",
                 "help": {"exit_code": 0}, "version": {"exit_code": 0},
                 "flags": ["--print", "--output-format", "--verbose"]}
     with patch("codex_harness_connect.adapters.inventory", return_value=evidence), \
-            patch("codex_harness_connect.adapters.require_subscription_route",
-                  side_effect=PermissionError("Claude own-subscription launch held")), \
-            patch.object(SessionService, "start") as spawn:
-        with pytest.raises(Exception, match="own-subscription launch held"):
-            asyncio.run(server.call_tool("start_session", {
-                "adapter": "claude", "prompt": "synthetic only", "cwd": str(tmp_path),
-                "expected_sha256": "a" * 64, "request_id": "0" * 32, "mode": "batch",
-                "batch_workspace_confirmation": str(tmp_path),
-            }))
-        spawn.assert_not_called()
+            patch("codex_harness_connect.auth.require_subscription_route") as auth:
+        contract = launch_contract("claude", "synthetic only", str(tmp_path), "batch", "a" * 64,
+                                   batch_workspace_confirmation=str(tmp_path))
+        auth.assert_not_called()
+        assert contract["auth_preflight"] is None
+        assert contract["argv"] == ["/trusted/claude", "--print", "--output-format",
+                                    "stream-json", "--verbose", "synthetic only"]
 
 
 @pytest.mark.parametrize("invalid", [{}, {"kind": "anything", "expected_sha256": "a" * 64},
@@ -149,4 +146,82 @@ def test_invalid_auth_preflight_cannot_start_worker(tmp_path, invalid):
     with patch("codex_harness_connect.sessions.subprocess.Popen") as spawn:
         with pytest.raises(ValueError, match="Invalid native auth preflight"):
             service.start(["/trusted/claude", "test"], str(tmp_path), auth_preflight=invalid)
+        spawn.assert_not_called()
+
+
+@pytest.mark.parametrize("options", [None, ["--effort=ultracode"],
+                                     ["--model=opus", "--effort=xhigh",
+                                      "--forward-subagent-text"]])
+def test_resume_accepts_explicit_reviewed_options_without_auth_bypass(tmp_path, options):
+    server = build_server(tmp_path / "state", "claude")
+    source = {"native_session_id": "verified-native-id", "protocol": "claude-stream-json",
+              "status": "cancelled", "cwd": str(tmp_path)}
+    evidence = {"binary_sha256": "a" * 64, "resolved_path": "/trusted/claude",
+                "help": {"exit_code": 0}, "version": {"exit_code": 0},
+                "flags": ["--print", "--output-format", "--verbose", "--resume",
+                          "--model", "--effort", "--forward-subagent-text"]}
+    args = {"adapter": "claude", "source_session_id": "b" * 32, "prompt": "review",
+            "cwd": str(tmp_path), "expected_sha256": "a" * 64, "request_id": "c" * 32,
+            "mode": "batch", "batch_workspace_confirmation": str(tmp_path)}
+    if options is not None:
+        args["native_options"] = options
+    with patch.object(SessionService, "status", return_value={"session": source}), \
+            patch("codex_harness_connect.adapters.inventory", return_value=evidence), \
+            patch("codex_harness_connect.auth.require_subscription_route") as auth, \
+            patch.object(SessionService, "start", return_value={"session_id": "d" * 32}) as spawn:
+        asyncio.run(server.call_tool("resume_session", args))
+    auth.assert_not_called()
+    argv = spawn.call_args.args[0]
+    assert argv == ["/trusted/claude", "--resume", "verified-native-id", "--print",
+                    "--output-format", "stream-json", "--verbose", *(options or []), "review"]
+    assert spawn.call_args.kwargs["auth_preflight"] is None
+
+
+@pytest.mark.parametrize("option", ["--dangerously-skip-permissions", "--effort",
+                                   "--settings=private.json", "--resume=other-id",
+                                   "--fallback-model=haiku", "--unknown=anything"])
+def test_resume_options_still_reject_unsafe_or_unknown_flags_before_launch(tmp_path, option):
+    server = build_server(tmp_path / "state", "claude")
+    source = {"native_session_id": "verified-native-id", "protocol": "claude-stream-json",
+              "status": "completed", "cwd": str(tmp_path)}
+    evidence = {"binary_sha256": "a" * 64, "resolved_path": "/trusted/claude",
+                "help": {"exit_code": 0}, "version": {"exit_code": 0},
+                "flags": ["--print", "--output-format", "--verbose", "--resume", "--effort"]}
+    with patch.object(SessionService, "status", return_value={"session": source}), \
+            patch("codex_harness_connect.adapters.inventory", return_value=evidence), \
+            patch("codex_harness_connect.auth.require_subscription_route") as auth, \
+            patch.object(SessionService, "start") as spawn:
+        with pytest.raises(Exception):
+            asyncio.run(server.call_tool("resume_session", {
+                "adapter": "claude", "source_session_id": "b" * 32, "prompt": "review",
+                "cwd": str(tmp_path), "expected_sha256": "a" * 64, "request_id": "c" * 32,
+                "mode": "batch", "batch_workspace_confirmation": str(tmp_path),
+                "native_options": [option],
+            }))
+        spawn.assert_not_called()
+        auth.assert_not_called()
+
+
+@pytest.mark.parametrize("change,error", [
+    ({"status": "running"}, "terminal state"),
+    ({"status": "starting"}, "terminal state"),
+    ({"native_session_id": None}, "verified native conversation"),
+    ({"protocol": None}, "verified native conversation"),
+    ({"cwd": "/different-workspace"}, "source job's workspace"),
+])
+def test_resume_rejects_invalid_source_before_inventory_or_launch(tmp_path, change, error):
+    server = build_server(tmp_path / "state", "claude")
+    source = {"native_session_id": "verified-id", "protocol": "claude-stream-json",
+              "status": "completed", "cwd": str(tmp_path)}
+    source.update(change)
+    with patch.object(SessionService, "status", return_value={"session": source}), \
+            patch("codex_harness_connect.adapters.inventory") as probe, \
+            patch.object(SessionService, "start") as spawn:
+        with pytest.raises(Exception, match=error):
+            asyncio.run(server.call_tool("resume_session", {
+                "adapter": "claude", "source_session_id": "b" * 32, "prompt": "review",
+                "cwd": str(tmp_path), "expected_sha256": "a" * 64, "request_id": "c" * 32,
+                "native_options": ["--effort=ultracode"],
+            }))
+        probe.assert_not_called()
         spawn.assert_not_called()

@@ -1,26 +1,15 @@
 ---
 name: with-grok-cli
-description: Delegate authorized local work to the unmodified grok CLI through Harness Connect.
+description: Inspect grok CLI readiness and resolve documented integration gaps.
 ---
 
-Use revalidate_cli and describe_adapter before starting work; follow connect_harness_cli for maintenance
-if identities changed or qualification is incomplete. This package is for grok only.
-Policy: subscription-route-confirmation-required. Official Grok Build CLI. Entitlement alone does not prove the effective model/auth route. Native API-key/BYOK fallback must be excluded before launch. Discovery only until then.
-For Claude only, auth_status observes the reviewed CLI in this server's environment and intended cwd.
-It does not attest to remaining quota or disabled usage credits; confirm the permitted budget separately.
-Keep the parent Codex task context and verify relevant AGENTS.md instructions. Pass required instructions,
-skill results and user-approved context explicitly in the prompt. Do not read or export hidden memory,
-credentials or settings. Native harness customizations are loaded by that harness itself.
-For native approvals or native team features, use interactive PTY; don't claim print mode supports them.
-Use start_session once, then wait_sessions with acknowledged cursors and drain session_events when
-changes are available. Waiting never launches/resumes/cancels native jobs and does not consume events.
-Keep OS job id and native conversation
-id separate. Choose and retain a fresh 32-character lowercase hex request_id before launching; recover an
-uncertain response with lookup_request. Never automatically restart a job whose outcome is uncertain.
-Use send_input for explicit user choices, cancel_session to stop and verify its final state, and
-resume_session with the source_session_id of a completed known job in the same workspace. Only typed
-native protocol can confirm its conversation id; arbitrary TUI text cannot. Do not invent native ids.
-Batch requires the exact workspace path explicitly authorized as trusted by the user; --print skips
-Claude's trust dialog. This acknowledgement does not approve tools or establish sandbox containment.
-Review changed files and tests with Codex's ordinary review tools. Jobs are external tasks, not native Codex
-subagents, and child tools have their own permission enforcement. Policy-held adapters cannot launch.
+Use revalidate_cli and describe_adapter for this requested adapter. Current policy: subscription-route-confirmation-required.
+Official Grok Build CLI. Entitlement alone does not prove the effective model/auth route. Native API-key/BYOK fallback must be excluded before launch. Discovery only until then.
+Explicit invocation authorizes investigation and scoped fixes; never ask the human to approve the
+same work again. The current adapter cannot launch. This is an integration gap, not an approval
+request: another user confirmation cannot resolve missing vendor evidence or an effective-route check.
+Continue independent project checks and fix the owning adapter when authoritative evidence permits.
+Do not substitute another harness without user authorization or bypass the hold with direct execution.
+Do not read credentials, change auth/billing/security or introduce paid fallback. Native permissions
+remain native. Report exactly which gate is unresolved, its primary sources and the next check.
+Claude-specific --print trust, Ultracode, resume and team features are not implied for this adapter.

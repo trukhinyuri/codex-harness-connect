@@ -122,8 +122,9 @@ def build_server(state_root: Path, profile: str | None = None) -> FastMCP:
     def resume_session(adapter: str, source_session_id: str, prompt: str, cwd: str,
                        expected_sha256: str, request_id: str, mode: str = "interactive",
                        timeout_seconds: int = 3600,
-                       batch_workspace_confirmation: str | None = None) -> dict:
-        """Resume a verified native conversation id in a new OS job. No 'most recent' guessing."""
+                       batch_workspace_confirmation: str | None = None,
+                       native_options: list[str] | None = None) -> dict:
+        """Resume a verified conversation with explicitly supplied reviewed native options."""
         selected(adapter)
         source = pools[adapter].status(source_session_id)["session"]
         native_session_id = source["native_session_id"]
@@ -134,6 +135,7 @@ def build_server(state_root: Path, profile: str | None = None) -> FastMCP:
         if source["cwd"] != str(Path(cwd).resolve(strict=True)):
             raise ValueError("Resume must use the source job's workspace")
         c = launch_contract(selected(adapter), prompt, cwd, mode, expected_sha256, native_session_id,
+                            options=native_options,
                             batch_workspace_confirmation=batch_workspace_confirmation)
         return pools[adapter].start(c["argv"], c["cwd"], c["mode"], timeout_seconds=timeout_seconds,
                                    request_id=request_id, protocol=c["protocol"],

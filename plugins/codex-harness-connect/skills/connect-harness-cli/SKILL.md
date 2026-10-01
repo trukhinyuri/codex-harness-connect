@@ -68,10 +68,11 @@ IDs; never delete receipts, rotate stores automatically or retry an uncertain re
 list_sessions is a compact bounded page: retain its next_cursor while has_more is true.
 Batch requires the exact resolved workspace path explicitly acknowledged by the user as trusted because
 Claude --print skips its trust dialog. Never invent that acknowledgement or treat it as tool approval.
-For Claude, call auth_status with the reviewed identity and intended workspace before a model request.
-Launch and worker preflights independently reject unavailable, API, override or unknown auth routes.
-The observation does not prove remaining included quota or disabled usage credits. Under a subscription-only
-budget, require current user-confirmed usage credits disabled; do not change billing/auth to pass a check.
+For Claude, preserve the installed CLI's current model, provider, login and settings. Do not perform
+subscription/route checks as a launch gate or require plan/billing confirmation. auth_status is an
+optional sanitized login diagnostic, not effective-route attestation or launch authorization.
+Explicit invocation authorizes scoped native work; the CLI handles its own authentication and errors.
+Do not inject a model, provider, API fallback or settings override. Native permissions remain separate.
 Use native interactive mode for native terminal/teams features;
 TTY text is not the Codex internal subagent UI. No yolo, bypass permissions, auth-token extraction, hidden
 paid fallback or sharing credentials. Current policy holds must be resolved through vendor evidence.

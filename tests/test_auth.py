@@ -88,6 +88,21 @@ def test_api_unknown_and_logged_out_never_authorize(monkeypatch, executable, tmp
     assert_private(result)
 
 
+def test_native_oauth_token_recognized_but_effective_route_unattested(
+    monkeypatch, executable, tmp_path,
+):
+    result = observation(monkeypatch, executable, tmp_path, {
+        "loggedIn": True, "authMethod": "oauth_token", "apiProvider": "firstParty",
+        "subscriptionType": None, "configDirectory": PRIVATE,
+    })
+    assert result["status"] == "held"
+    assert result["auth_method"] == "oauth_token"
+    assert result["api_provider"] == "firstParty"
+    assert result["route_eligible"] is False
+    assert result["reason_codes"] == ["effective_route_not_attested"]
+    assert_private(result)
+
+
 @pytest.mark.parametrize("raw", [
     b"{}", b"[]", b"null", b"\xff", b"{", b'{"loggedIn":1}',
     json.dumps({**VALID, "loggedIn": "true"}).encode(),
@@ -269,3 +284,25 @@ def test_real_synthetic_failure_reaps_ignoring_child(monkeypatch, executable, tm
     with pytest.raises(ProcessLookupError):
         os.kill(pid, 0)
     assert_private(result)
+
+
+@pytest.mark.parametrize("provider", ["bedrock", "vertex", "foundry"])
+def test_oauth_token_cannot_authorize_other_providers(monkeypatch, executable, tmp_path, provider):
+    result = observation(monkeypatch, executable, tmp_path, {
+        **VALID, "authMethod": "oauth_token", "apiProvider": provider,
+    })
+    assert result["route_eligible"] is False
+    assert_private(result)
+
+
+def test_native_subscription_token_is_not_a_route_override(monkeypatch, executable, tmp_path):
+    os.environ["CLAUDE_CODE_OAUTH_TOKEN"] = PRIVATE
+    result = observation(monkeypatch, executable, tmp_path, {
+        **VALID, "authMethod": "oauth_token", "subscriptionType": None,
+    })
+    assert result["route_eligible"] is False
+    assert result["reason_codes"] == ["effective_route_not_attested"]
+    assert result["override_names_present"] == []
+    assert_private(result)
+    os.environ["ANTHROPIC_API_KEY"] = PRIVATE
+    assert observation(monkeypatch, executable, tmp_path)["route_eligible"] is False

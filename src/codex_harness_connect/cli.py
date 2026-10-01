@@ -11,12 +11,14 @@ from .discovery import inventory
 from .plugins import generate_marketplace
 from .revalidation import revalidate
 
-DEFAULT_STATE_ROOT = Path(os.environ.get("XDG_STATE_HOME", str(Path.home() / ".local/state"))) / "codex-harness-connect"
+_state_home = os.environ.get("XDG_STATE_HOME", "")
+DEFAULT_STATE_ROOT = (Path(_state_home) if os.path.isabs(_state_home)
+                      else Path.home() / ".local/state") / "codex-harness-connect"
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--version", action="version", version="0.1.0a8")
+    parser.add_argument("--version", action="version", version="0.1.0a15")
     sub = parser.add_subparsers(dest="command", required=True)
     probe = sub.add_parser("inventory")
     probe.add_argument("executable", help="User-designated trusted installed CLI")

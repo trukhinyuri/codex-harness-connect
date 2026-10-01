@@ -6,8 +6,8 @@ claims and generated artifacts.
 
 | Layer | Actual evidence | Limit |
 | --- | --- | --- |
-| Main regression suite | 494 tests and 74 subtests passed on macOS/Python 3.14.7; Ruff passed. Independent auth/transport review and targeted tests passed | Synthetic processes/protocol fixtures; separate native acceptance gates remain |
-| Installed runtime | Noneditable alpha.8 wheel: all 18 module hashes match source; five catalogs and four form-protocol cases passed. Alpha.5 storage/recovery checks remain recorded below | One local platform, synthetic answering client; no additional vendor inference |
+| Alpha.8 regression suite | 494 tests and 74 subtests passed on macOS/Python 3.14.7; Ruff passed. Independent auth/transport review and targeted tests passed | Synthetic processes/protocol fixtures; separate native acceptance gates remain |
+| Installed runtime | Noneditable alpha.8 wheel: all 18 module hashes matched alpha.8 source; five catalogs and four form-protocol cases passed. Alpha.5 storage/recovery checks remain recorded below | One local platform, synthetic answering client; no additional vendor inference |
 | Claude native tasks | Claude Code 2.1.286: earlier exact replies, same-ID resume and recall after reconnect; alpha.8 performed exactly two native Read calls and returned the fixture's context marker and number | Read-only fixture unchanged; no native approval/denial, teams or file-edit acceptance |
 | Native auth guard | Current Desktop auth observation and actual worker preflight used the reviewed own-subscription route. Unavailable/API/override/unknown routes and preflight cancellation tested synthetically | Point-in-time route evidence; neither quota nor future billing is guaranteed |
 | Native help transport | Three full PTY help probes matched after successful pipe probes had returned partial help; current Desktop alpha.8 inventory uses PTY and contains required flags | One observed CLI version/host; top-level tokens are not recursive feature qualification |
@@ -17,7 +17,7 @@ claims and generated artifacts.
 | Grok | Official docs/source, installed 1.0.44 alpha help/inspect; prepared JSON contract | Native effective auth/model route and absence of paid fallback unproven; no inference |
 | GLM | Official supported-tool docs and subscription terms read; profile isolation design | Existing usable profile and this orchestration's use classification unverified; no inference |
 | agy/Hermes | Current Google docs/terms, installed1.2.14 help, pinned Hermes source | Applicable permission unresolved; no inference |
-| Local plugin installation | All five alpha.8 packages updated via installed CLI; 20 cache files match generated packages; fresh stdio catalogs expose 17 router/16 Claude/15 other scoped tools. Current Desktop returned the new PTY inventory and auth observation, and ran the Read test | Backend/tool behavior proved; full progress, form rendering and native consent UX remain separate. UI automation denied access to Codex |
+| Local plugin installation | All five alpha.8 packages updated via installed CLI; 20 cache files matched alpha.8 generated packages; fresh stdio catalogs expose 17 router/16 Claude/15 other scoped tools. Current Desktop returned the new PTY inventory and auth observation, and ran the Read test | Backend/tool behavior proved; full progress, form rendering and native consent UX remain separate. UI automation denied access to Codex |
 | Hosted CI | Prior [alpha.6 revision](https://github.com/trukhinyuri/codex-harness-connect/actions/runs/36841814699) passed all four macOS/Linux and Python 3.11/3.14 jobs. Verify each later exact revision in the [CI runs](https://github.com/trukhinyuri/codex-harness-connect/actions/workflows/ci.yml) | Synthetic CI is not native vendor or Desktop UI qualification |
 
 Local account observations, absolute home paths, conversations and raw CLI readbacks are private and
@@ -47,8 +47,8 @@ Exact content review passed for the initial 53-file source alpha. The public
 through GitHub. All five local packages and their MCP servers were discovered by the native backend.
 This proves installation/backend discovery; full runtime and Desktop UI acceptance remain separate gates.
 
-Current configured labels are `connect_harness_cli`, `with_claude_cli`, `with_claude_cli_glm`, `with_grok_cli` and
-`with_agy_cli`. The installed alpha.8 manifests/skills match the generator; the host controls any namespace prefix in its UI.
+Current configured labels are `connect_harness_cli`, `with_claude_cli`, `with_grok_cli` and
+`with_agy_cli`. The alpha.8 manifests/skills matched that revision’s generator; the host controls any namespace prefix in its UI.
 
 Next: unresolved native acceptance/profile/policy/containment/UI gates.
 Preserve the full original objective. See [SQLite lifecycle evidence](sqlite-lifecycle.md).
@@ -183,3 +183,22 @@ kept qualification incomplete. These calls prove new API loading and read behavi
 native provider tasks, progress/approval rendering or UI parity. The alpha.5 runtime commit's
 [CI run](https://github.com/trukhinyuri/codex-harness-connect/actions/runs/36836820502) passed all four
 macOS/Linux and Python 3.11/3.14 jobs; later documentation revisions have their own exact-revision CI.
+
+## Current source candidate (2026-10-01)
+
+Alpha.15 passed the full 551-test suite and 74 subtests, plus Ruff. Its installed wheel and official
+Claude plugin installation were checked. Twelve nonplugin configuration groups were unchanged.
+The separate GLM plugin was uninstalled and removed from the generated/published catalog at the user's
+request. Claude now uses its current native model/provider/settings without subscription-route launch gates.
+No auth, model/provider, billing or security setting was changed. Native permissions remain native.
+
+Current Desktop readback reported loaded source alpha.14. The alpha.15 plugin points to a separate
+version runtime. Fresh installed stdio matched all 18 source modules and four catalogs. One actual
+native-default no-tool task returned typed success READY, model claude-opus-5-5 and bypassPermissions.
+That permission mode came from native defaults, not an injected option. Native autoreview and current
+Desktop loading of alpha.15 remain unverified.
+
+A complete native Ultracode review of the earlier 84-file snapshot returned findings from three reviewers
+and a verifier. One reviewer invoked a prohibited harmless shell command; this is evidence of review,
+not proof that prompt restrictions enforce permission policy. The candidate remains uncommitted, with
+no exact-revision public CI. Production gates remain open.

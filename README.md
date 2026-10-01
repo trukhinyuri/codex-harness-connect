@@ -14,19 +14,18 @@ The [cursor wait tool](docs/waiting.md) observes up to eight existing jobs with 
 transcripts are read explicitly when events become available.
 The [interaction check](docs/native-interaction-contract.md) tests a connected client's standard
 MCP question form without launching a model or granting native tool permission.
-Claude's [native auth preflight](docs/native-auth.md) rejects an API, unavailable or unknown route
-before a model process starts, and repeats in the detached worker's environment and workspace.
-It does not certify remaining subscription quota or disabled usage credits.
+Claude uses its existing native model, provider, login and settings. The connector does not gate
+launches on subscription type or inferred routing. [Optional auth diagnostics](docs/native-auth.md)
+do not establish effective routing, billing or permission to act.
 Registered Claude [help discovery](docs/native-discovery.md) uses PTY output to avoid an observed
 incomplete pipe-help response; missing flags and identity changes still stop a launch.
 
-Requested adapters are Claude Code, Claude Code with GLM Coding Plan, official Grok Build and official
-Antigravity `agy`. These are separate contracts. ZCode's desktop agent is not the Claude executable.
+Requested adapters are Claude Code, official Grok Build and official Antigravity `agy`.
+Claude uses whichever model/provider its existing configuration selects; there is no separate GLM package.
 
 | Adapter | Current launch policy | Verified runtime |
 | --- | --- | --- |
-| Claude Code | Personal use of unmodified official CLI, native login/permissions; own-subscription auth preflight | Native reply, resume and history after MCP reconnect tested on 2.1.286; approvals/teams pending |
-| Claude + GLM | Held for documented provider profile and vendor-use classification | Pending |
+| Claude Code | Personal use of unmodified official CLI, existing model/provider and native auth/permissions | Native reply, resume and history after MCP reconnect tested on 2.1.286; approvals/teams pending |
 | Grok Build | Held for effective subscription-only route and exclusion of native paid fallback | Prepared JSON contract; no inference |
 | agy | Held for clarification of Google third-party-tool restriction | Pending |
 
@@ -73,11 +72,13 @@ Register an authorized, reviewed marketplace with `codex plugin marketplace add 
 then install the desired package through Codex's plugin browser or supported `codex plugin add` command.
 Start a fresh session after installation. Do not change model/auth/security defaults to make a test pass.
 
-The bundled marketplace contains `codex-harness-connect` and `harness-claude`, `harness-claude-glm`,
+Claude uses its existing native default model/provider; there is no separate GLM skill.
+
+The bundled marketplace contains `codex-harness-connect` and `harness-claude`,
 `harness-grok`, `harness-agy`. Policy-held adapters expose evidence and discovery but cannot launch.
 Existing plugin directories/marketplaces are not overwritten by the generator.
 
-The configured display labels are `connect_harness_cli`, `with_claude_cli`, `with_claude_cli_glm`, `with_grok_cli`,
+The configured display labels are `connect_harness_cli`, `with_claude_cli`, `with_grok_cli`,
 and `with_agy_cli`. Skill interface metadata preserves these labels literally; the host controls any
 additional namespace prefix in its UI. Package identifiers
 stay unchanged so existing installations can update without adding duplicate plugins. Skill identifiers

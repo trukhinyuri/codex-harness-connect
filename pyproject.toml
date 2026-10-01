@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "codex-harness-connect"
-version = "0.1.0a8"
+version = "0.1.0a15"
 description = "Evidence-driven local Codex plugins for unmodified agent CLIs"
 readme = "README.md"
 requires-python = ">=3.11"

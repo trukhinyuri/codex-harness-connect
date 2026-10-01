@@ -23,7 +23,7 @@ updates or logs in. Native version commands can have their own vendor-defined si
 
 ## Required maintenance procedure
 
-1. Preserve the original outcome tree, destination, R1–R14 gates and user defaults/budget. Read the fresh
+1. Preserve the original outcome tree, destination, R1–R16 gates and user defaults/budget. Read the fresh
    observation and check the native Desktop updater separately when available. Distinguish installed,
    running and available versions. Do not claim the installed binary is the newest release from --version.
 2. Review current official docs, release notes, terms and source as available. Inspect recursive commands,
@@ -54,7 +54,7 @@ Earlier bounded alpha diagnostics are not a production dependency or official en
 
 Desktop bundle metadata does not prove the foreground app or UI compatibility. A denied computer-use
 interface must not be bypassed. Installing a local plugin does not deploy its process into Cloud.
-The existing GLM/Grok/agy policy holds and failed full macOS containment gate remain. This release
+The existing Grok/agy policy holds and failed full macOS containment gate remain. This release
 improves drift observation and the maintenance workflow; it does not solve these independent gates.
 
 The current [MCP Events documentation](https://developers.openai.com/plugins/build/mcp-events) describes

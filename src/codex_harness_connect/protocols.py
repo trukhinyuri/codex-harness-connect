@@ -255,9 +255,14 @@ class ClaudeStreamParser:
             ):
                 if _uuid(item.get("session_id")) != self._init_id:
                     self._identity_invalid = True
-            return self._error(
+            events = self._error(
                 "event_after_result", "A print-mode event followed the terminal result"
             )
+            # Keep the stream ambiguous, but retain a validated later failure.
+            # Some native runs emit an empty success before compaction fails.
+            if item["type"] == "result" and item.get("is_error") is True:
+                events += self._result(item)
+            return events
         kind = item["type"]
         if kind == "system" and item.get("subtype") == "init":
             native = _uuid(item.get("session_id"))
@@ -276,6 +281,12 @@ class ClaudeStreamParser:
                     "native_session_id": self.native_session_id,
                     "identity_verified": self.native_session_id is not None,
                     "model": _bounded_text(item.get("model")),
+                    "permission_mode": (item.get("permissionMode") if isinstance(item.get("permissionMode"), str)
+                                        and item.get("permissionMode") in {"default", "manual", "auto", "acceptEdits",
+                                            "bypassPermissions", "dontAsk", "plan"} else None),
+                    "permission_mode_observed": isinstance(item.get("permissionMode"), str)
+                        and item.get("permissionMode") in {"default", "manual", "auto",
+                            "acceptEdits", "bypassPermissions", "dontAsk", "plan"},
                 }
             ]
         if kind == "result":
@@ -324,6 +335,20 @@ class ClaudeStreamParser:
                     text_truncated=len(text) > MAX_PREVIEW_CHARS,
                 )
             return [normalized]
+        if kind == "system" and item.get("subtype") == "task_progress":
+            agents = []
+            raw = item.get("workflow_progress", [])
+            entries = [entry for entry in raw if isinstance(entry, dict)
+                       and entry.get("type") == "workflow_agent"] if isinstance(raw, list) else []
+            for entry in entries[:32]:
+                if not isinstance(entry, dict) or entry.get("type") != "workflow_agent":
+                    continue
+                agents.append({key: _bounded_text(entry.get(key), 128)
+                               for key in ("label", "state", "phaseTitle", "model", "lastToolName")})
+            return [{"kind": "task_progress", "task_id": _bounded_text(item.get("task_id"), 128),
+                     "description": _bounded_text(item.get("description"), 256),
+                     "agents": agents, "agents_truncated": len(entries) > 32,
+                     "task_acceptance": "requires-parent-verification"}]
         return [
             {
                 "kind": "system" if kind == "system" else "unknown",

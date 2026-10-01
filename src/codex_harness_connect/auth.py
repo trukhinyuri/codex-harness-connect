@@ -21,7 +21,7 @@ ROUTE_OVERRIDES = frozenset({
     "ANTHROPIC_CUSTOM_HEADERS", "ANTHROPIC_PROFILE", "ANTHROPIC_FEDERATION_RULE_ID",
     "ANTHROPIC_ORGANIZATION_ID", "ANTHROPIC_WORKSPACE_ID", "ANTHROPIC_AWS_API_KEY",
     "ANTHROPIC_AWS_BASE_URL", "ANTHROPIC_AWS_WORKSPACE_ID", "ANTHROPIC_BEDROCK_BASE_URL",
-    "ANTHROPIC_BEDROCK_MANTLE_BASE_URL", "CLAUDE_CONFIG_DIR", "CLAUDE_CODE_OAUTH_TOKEN",
+    "ANTHROPIC_BEDROCK_MANTLE_BASE_URL", "CLAUDE_CONFIG_DIR",
     "ANTHROPIC_FOUNDRY_API_KEY", "ANTHROPIC_FOUNDRY_AUTH_TOKEN",
     "ANTHROPIC_FOUNDRY_BASE_URL", "ANTHROPIC_FOUNDRY_RESOURCE",
     "ANTHROPIC_VERTEX_BASE_URL", "ANTHROPIC_VERTEX_PROJECT_ID", "AWS_BEARER_TOKEN_BEDROCK",
@@ -34,7 +34,7 @@ ROUTE_OVERRIDES = frozenset({
     "CLAUDE_CODE_OAUTH_REFRESH_TOKEN", "CLAUDE_CODE_OAUTH_SCOPES",
 })
 _ENUMS = {
-    "authMethod": ("auth_method", {"none", "claude.ai", "api_key"}),
+    "authMethod": ("auth_method", {"none", "claude.ai", "api_key", "oauth_token"}),
     "apiProvider": ("api_provider", {"firstParty", "bedrock", "vertex", "foundry"}),
     "subscriptionType": ("subscription_type", {"pro", "max", "team", "enterprise"}),
 }
@@ -171,6 +171,13 @@ def observe_auth(executable: str, cwd: str, expected_sha256: str, *, cancel_requ
             result.update(status="held", reason_codes=["auth_or_route_override_present"])
         elif not result["logged_in"]:
             result.update(status="not_authenticated", reason_codes=["native_auth_unavailable"])
+        elif (result["auth_method"] == "oauth_token"
+              and result["api_provider"] == "firstParty"):
+            # Anthropic documents setup-token as native subscription auth for
+            # scripts. Observe native status only; never read the token value.
+            # Live acceptance found firstParty OAuth status with a GLM init model.
+            # Login status cannot attest settings-derived effective request routing.
+            result.update(status="held", reason_codes=["effective_route_not_attested"])
         elif (result["auth_method"] == "claude.ai" and result["api_provider"] == "firstParty"
               and result["subscription_type"] in {"pro", "max", "team", "enterprise"}):
             result.update(status="subscription_route_observed", route_eligible=True)

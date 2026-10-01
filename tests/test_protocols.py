@@ -397,3 +397,59 @@ def test_invalid_unicode_is_reported_and_no_raw_diagnostic_is_retained():
 def test_invalid_limits(limits):
     with pytest.raises(ValueError):
         ClaudeStreamParser(**limits)
+
+
+def test_auth_loss_result_cannot_be_accepted_as_success_even_with_exit_zero():
+    parser = ClaudeStreamParser()
+    failure = {**RESULT, "subtype": "error_during_execution", "is_error": True,
+               "result": None, "errors": ["Not logged in"], "api_error_status": 401}
+    parser.feed(wire(INIT, failure))
+    outcome = parser.finish(0)
+    assert outcome["semantic_status"] == "failed"
+    assert outcome["native_session_id"] == SESSION
+    assert outcome["api_error_status"] == 401
+
+
+def test_tui_auth_failure_and_resume_hint_never_establish_native_identity():
+    parser = ClaudeStreamParser()
+    parser.feed("Not logged in. Resume with --resume " + SESSION + "\n")
+    outcome = parser.finish(0)
+    assert outcome["semantic_status"] == "unknown"
+    assert outcome["native_session_id"] is None
+
+
+def test_workflow_progress_exposes_bounded_agents_without_private_prompts():
+    parser = ClaudeStreamParser()
+    event = {"type": "system", "subtype": "task_progress", "task_id": "workflow1",
+             "description": "Verify", "workflow_progress": [
+                 {"type": "workflow_agent", "label": "review:A", "state": "done",
+                  "phaseTitle": "Review", "model": "native-model", "lastToolName": "Read",
+                  "promptPreview": "PRIVATE_PROMPT", "thinking": "PRIVATE_THOUGHT"}] * 40}
+    events = parser.feed(wire(INIT, event))
+    progress = [e for e in events if e.get("kind") == "task_progress"][0]
+    assert len(progress["agents"]) == 32 and progress["agents_truncated"]
+    assert progress["agents"][0]["state"] == "done"
+    assert "PRIVATE" not in json.dumps(progress)
+    assert parser.finish(0)["semantic_status"] != "succeeded"
+
+
+def test_trailing_error_result_preserves_failure_diagnostic_without_accepting_stream():
+    parser = ClaudeStreamParser()
+    error = dict(RESULT, is_error=True, result="Subscription model unavailable", api_error_status=429)
+    events = parser.feed(wire(INIT, dict(RESULT, result=""), error))
+    outcome = parser.finish(1)
+    assert outcome["semantic_status"] == "unknown"
+    assert "event_after_result" in codes(outcome)
+    assert outcome["is_error"] is True
+    assert outcome["api_error_status"] == 429
+    assert any(event.get("is_error") is True for event in events)
+
+
+@pytest.mark.parametrize("mode", ["default", "manual", "auto", "acceptEdits", "bypassPermissions", "dontAsk", "plan", None, "unknown", 42, [], {}])
+def test_native_init_permission_mode_is_observed_without_granting_approval(mode):
+    parser = ClaudeStreamParser()
+    event = parser.feed(wire({**INIT, "permissionMode": mode}))[0]
+    known = isinstance(mode, str) and mode in {"default", "manual", "auto", "acceptEdits", "bypassPermissions", "dontAsk", "plan"}
+    assert event["permission_mode"] == (mode if known else None)
+    assert event["permission_mode_observed"] is known
+    assert parser.finish(0)["semantic_status"] == "unknown"

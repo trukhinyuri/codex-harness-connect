@@ -1,13 +1,13 @@
 {
   "name": "harness-claude",
-  "version": "0.1.0-alpha.8",
-  "description": "Own-account unmodified CLI. Subscription login must stay inside Claude Code. Headless teams are not supported; use interactive sessions for native teams.",
+  "version": "0.1.0-alpha.15",
+  "description": "Own-account unmodified CLI using its current configured model and provider. Auth stays inside Claude Code. Headless teams are not supported; use interactive sessions for native teams.",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "with_claude_cli",
     "shortDescription": "Local CLI delegation",
-    "longDescription": "Own-account unmodified CLI. Subscription login must stay inside Claude Code. Headless teams are not supported; use interactive sessions for native teams.",
+    "longDescription": "Own-account unmodified CLI using its current configured model and provider. Auth stays inside Claude Code. Headless teams are not supported; use interactive sessions for native teams.",
     "developerName": "Yuri Trukhin",
     "category": "Productivity",
     "capabilities": [

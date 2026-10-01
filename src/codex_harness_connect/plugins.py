@@ -76,10 +76,11 @@ IDs; never delete receipts, rotate stores automatically or retry an uncertain re
 list_sessions is a compact bounded page: retain its next_cursor while has_more is true.
 Batch requires the exact resolved workspace path explicitly acknowledged by the user as trusted because
 Claude --print skips its trust dialog. Never invent that acknowledgement or treat it as tool approval.
-For Claude, call auth_status with the reviewed identity and intended workspace before a model request.
-Launch and worker preflights independently reject unavailable, API, override or unknown auth routes.
-The observation does not prove remaining included quota or disabled usage credits. Under a subscription-only
-budget, require current user-confirmed usage credits disabled; do not change billing/auth to pass a check.
+For Claude, preserve the installed CLI's current model, provider, login and settings. Do not perform
+subscription/route checks as a launch gate or require plan/billing confirmation. auth_status is an
+optional sanitized login diagnostic, not effective-route attestation or launch authorization.
+Explicit invocation authorizes scoped native work; the CLI handles its own authentication and errors.
+Do not inject a model, provider, API fallback or settings override. Native permissions remain separate.
 Use native interactive mode for native terminal/teams features;
 TTY text is not the Codex internal subagent UI. No yolo, bypass permissions, auth-token extraction, hidden
 paid fallback or sharing credentials. Current policy holds must be resolved through vendor evidence.
@@ -104,8 +105,12 @@ description: Delegate authorized local work to the unmodified {profile} CLI thro
 Use revalidate_cli and describe_adapter before starting work; follow connect_harness_cli for maintenance
 if identities changed or qualification is incomplete. This package is for {profile} only.
 Policy: {adapter.policy}. {description}
-For Claude only, auth_status observes the reviewed CLI in this server's environment and intended cwd.
-It does not attest to remaining quota or disabled usage credits; confirm the permitted budget separately.
+For Claude, use the CLI's current default model/provider and existing native settings without route or
+subscription launch gates. auth_status is optional diagnostic only, not a prerequisite for launching.
+It does not attest to effective routing, quota or billing. Explicit invocation authorizes scoped work; do not request that action approval again
+or block on subscription plan changes. Reuse exact workspace trust already confirmed by the human.
+Keep unobserved billing facts unknown; never change billing/auth or introduce an API fallback.
+Native tool approvals remain separate and must follow the native permission mechanism.
 Keep the parent Codex task context and verify relevant AGENTS.md instructions. Pass required instructions,
 skill results and user-approved context explicitly in the prompt. Do not read or export hidden memory,
 credentials or settings. Native harness customizations are loaded by that harness itself.
@@ -116,12 +121,31 @@ Keep OS job id and native conversation
 id separate. Choose and retain a fresh 32-character lowercase hex request_id before launching; recover an
 uncertain response with lookup_request. Never automatically restart a job whose outcome is uncertain.
 Use send_input for explicit user choices, cancel_session to stop and verify its final state, and
-resume_session with the source_session_id of a completed known job in the same workspace. Only typed
+resume_session with the source_session_id of a terminal known job in the same workspace. Explicitly
+supply reviewed native_options (for example --effort=ultracode) when needed on resume; they are not
+automatically copied from an earlier launch. Only typed
 native protocol can confirm its conversation id; arbitrary TUI text cannot. Do not invent native ids.
 Batch requires the exact workspace path explicitly authorized as trusted by the user; --print skips
 Claude's trust dialog. This acknowledgement does not approve tools or establish sandbox containment.
 Review changed files and tests with Codex's ordinary review tools. Jobs are external tasks, not native Codex
 subagents, and child tools have their own permission enforcement. Policy-held adapters cannot launch.
+"""
+        if adapter.policy != "personal-unmodified-cli":
+            body = f"""---
+name: {skill_name}
+description: Inspect {profile} CLI readiness and resolve documented integration gaps.
+---
+
+Use revalidate_cli and describe_adapter for this requested adapter. Current policy: {adapter.policy}.
+{description}
+Explicit invocation authorizes investigation and scoped fixes; never ask the human to approve the
+same work again. The current adapter cannot launch. This is an integration gap, not an approval
+request: another user confirmation cannot resolve missing vendor evidence or an effective-route check.
+Continue independent project checks and fix the owning adapter when authoritative evidence permits.
+Do not substitute another harness without user authorization or bypass the hold with direct execution.
+Do not read credentials, change auth/billing/security or introduce paid fallback. Native permissions
+remain native. Report exactly which gate is unresolved, its primary sources and the next check.
+Claude-specific --print trust, Ultracode, resume and team features are not implied for this adapter.
 """
     else:
         name = "codex-harness-connect"
@@ -130,7 +154,7 @@ subagents, and child tools have their own permission enforcement. Policy-held ad
         skill_name, body = "connect-harness-cli", RESEARCH_SKILL
     args = ["serve"] + (["--profile", profile] if profile else [])
     manifest = {
-        "name": name, "version": "0.1.0-alpha.8", "description": description,
+        "name": name, "version": "0.1.0-alpha.15", "description": description,
         "skills": "./skills/", "mcpServers": "./.mcp.json",
         "interface": {"displayName": display_name, "shortDescription": "Local CLI delegation",
                       "longDescription": description, "developerName": "Yuri Trukhin",
@@ -223,7 +247,7 @@ def generate_marketplace(root: Path, command: str = "codex-harness-connect") -> 
                                or any(plugin_root.iterdir())):
         raise FileExistsError("Existing plugins must be reviewed before generating packages")
     specs = [_plugin_spec(plugin_root / "codex-harness-connect", None, command)]
-    specs += [_plugin_spec(plugin_root / f"harness-{name}", name, command) for name in ADAPTERS]
+    specs += [_plugin_spec(plugin_root / f"harness-{name}", name, command) for name in ADAPTERS if name != "claude-glm"]
     plugins = [result for result, _ in specs]
     catalog = {"name": "codex-harness-connect", "interface": {"displayName": "Harness Connect"},
                "plugins": [{"name": p["name"], "source": {"source": "local", "path": "./plugins/" + p["name"]},

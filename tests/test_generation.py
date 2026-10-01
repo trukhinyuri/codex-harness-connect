@@ -73,7 +73,7 @@ def test_single_plugin_failure_removes_its_partial_files(tmp_path, monkeypatch):
 def test_successful_batch_preserves_catalog_and_manifest_contract(tmp_path):
     result = plugins.generate_marketplace(tmp_path, command="reviewed-command")
     catalog = json.loads(Path(result["marketplace"]).read_text())
-    expected = {"codex-harness-connect", *[f"harness-{name}" for name in plugins.ADAPTERS]}
+    expected = {"codex-harness-connect", *[f"harness-{name}" for name in plugins.ADAPTERS if name != "claude-glm"]}
     assert {item["name"] for item in result["plugins"]} == expected
     assert {item["name"] for item in catalog["plugins"]} == expected
     server_names = set()
@@ -88,7 +88,7 @@ def test_successful_batch_preserves_catalog_and_manifest_contract(tmp_path):
         server_names.add(server_name)
         assert config["command"] == "reviewed-command"
         assert config["args"][0] == "serve"
-        assert manifest["version"] == "0.1.0-alpha.8"
+        assert manifest["version"] == "0.1.0-alpha.15"
         if item["name"] == "codex-harness-connect":
             assert manifest["interface"]["displayName"] == "connect_harness_cli"
             skill = directory / "skills/connect-harness-cli/SKILL.md"
@@ -108,3 +108,45 @@ def test_dangling_marketplace_symlink_is_not_overwritten(tmp_path):
         plugins.generate_marketplace(tmp_path)
     assert marketplace.is_symlink()
     assert not (tmp_path / "plugins").exists()
+
+
+def test_generated_skills_reuse_authorization_without_inventing_billing_or_trust(tmp_path):
+    result = plugins.generate_marketplace(tmp_path)
+    for item in result["plugins"]:
+        skill = next((Path(item["path"]) / "skills").glob("*/SKILL.md")).read_text()
+        if item["name"] == "codex-harness-connect":
+            assert "Do not perform" in skill
+            assert "subscription/route checks as a launch gate" in skill
+        elif item["name"] == "harness-claude":
+            assert "do not request that action approval again" in skill
+            assert "Keep unobserved billing facts unknown" in skill
+            assert "Native tool approvals remain separate" in skill
+            assert "exact workspace path explicitly authorized" in skill
+
+        if item["name"] in {"harness-agy", "harness-grok", "harness-claude-glm"}:
+            assert "This is an integration gap, not an approval" in skill
+            assert "Explicit invocation authorizes launching" not in skill
+            assert "Batch requires" not in skill
+
+
+def test_public_plugins_equal_generator(tmp_path):
+    root = Path(__file__).resolve().parents[1]
+    plugins.generate_marketplace(tmp_path)
+    generated = {str(p.relative_to(tmp_path / "plugins")): p.read_bytes()
+                 for p in (tmp_path / "plugins").rglob("*") if p.is_file()}
+    published = {str(p.relative_to(root / "plugins")): p.read_bytes()
+                 for p in (root / "plugins").rglob("*") if p.is_file()}
+    assert generated == published
+
+
+@pytest.mark.parametrize("value", ["", "relative", "/absolute-state"] )
+def test_default_state_home_is_absolute(monkeypatch, value):
+    import importlib
+
+    from codex_harness_connect import cli
+    monkeypatch.setenv("XDG_STATE_HOME", value)
+    importlib.reload(cli)
+    expected = Path(value) if value.startswith("/") else Path.home() / ".local/state"
+    assert cli.DEFAULT_STATE_ROOT == expected / "codex-harness-connect"
+    monkeypatch.undo()
+    importlib.reload(cli)

@@ -260,3 +260,19 @@ def test_real_history_pages_equal_timestamps_are_complete(tmp_path):
     assert seen == sorted(ids, reverse=True)
     with pytest.raises(ValueError):
         service.list_page(before_session_id="f" * 32)
+
+
+def test_wait_reports_fully_evicted_terminal_job(tmp_path, monkeypatch):
+    import asyncio
+
+    from codex_harness_connect.waiting import WaitTarget, wait_for_sessions
+    monkeypatch.setattr(storage, "MAX_TOTAL_EVENT_BYTES", 100)
+    service = SessionService(tmp_path)
+    with session_db(tmp_path) as db:
+        first, second = receipt(db), receipt(db)
+        event(db, first, "output", {"text": "first"})
+        event(db, second, "output", {"text": "later" * 15})
+    result = asyncio.run(wait_for_sessions([WaitTarget(session_id=first, after=0)], service.status, 0))
+    assert result["reason"] == "retention_gap"
+    item = result["sessions"][0]
+    assert item["terminal"] and item["next_cursor"] == 0 and "error" not in item
