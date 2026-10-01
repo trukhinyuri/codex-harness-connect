@@ -17,9 +17,9 @@ This objective is not replaced by an alpha scaffold or synthetic-only testing.
 | R7 agy | Applicable Google permission plus NDJSON/PTY/teams/session lifecycle acceptance | Legal hold, live tests pending |
 | R8 Codex feature continuity | AGENTS.md, skills, explicit memory context, plugins/MCP, worktrees, permissions, review | Design boundaries documented; live checks pending |
 | R9 Native Desktop experience | Progress, questions, approvals, stop, continuation, changes and native-team integration | No UI parity established |
-| R10 Reliability | Durable live state, timeout, reconnect, cancellation descendants, bounded storage, startup/auth/limit/drift handling | 179 tests and 74 subtests passed; full macOS daemon containment failed |
-| R11 Publication | Secret review, independent code review, passing CI, public GitHub authoritative readback | User selected public; exact review/CI/publication pending |
-| R12 Install | Supported marketplace install, current Desktop readback, fresh-session tool/skill use | Pending |
+| R10 Reliability | Durable live state, timeout, reconnect, cancellation descendants, bounded storage, startup/auth/limit/drift handling | 186 tests and 74 subtests passed; full macOS daemon containment failed |
+| R11 Publication | Secret review, independent code review, passing CI, public GitHub authoritative readback | Public alpha/review/readback completed; first hosted CI failed, fix pending |
+| R12 Install | Supported marketplace install, current Desktop readback, fresh-session tool/skill use | All five installed; native backend skills/tools discovered; Desktop chat/UI pending |
 | R13 Production readiness | All requested gates proven, limitations resolved or explicitly incompatible requirements addressed by user | Not achieved |
 | R14 Preserve defaults/budget | Native quota reads; no auth/payment/security/model/speed changes; 20pp reserve | Preserved so far |
 

@@ -9,11 +9,13 @@ import re
 import signal
 import socket
 import sqlite3
+import stat
 import subprocess
 import sys
 import threading
 import time
 import uuid
+from contextlib import contextmanager
 from pathlib import Path
 
 TERMINAL = frozenset({"completed", "failed", "cancelled", "timed_out", "lost"})
@@ -23,6 +25,7 @@ MAX_INPUT_BYTES = 1024 * 1024
 MAX_TRACKED_PROCESSES = 2048
 STARTUP_GRACE_SECONDS = 5
 _ID = re.compile(r"[0-9a-f]{32}\Z")
+_DB_FILE_LOCK = threading.Lock()
 
 
 class _BSDInfo(ctypes.Structure):
@@ -72,12 +75,42 @@ def socket_path(root: Path, session_id: str) -> Path:
 
 
 def connect_db(root: Path) -> sqlite3.Connection:
-    fd = os.open(root / "sessions.sqlite3", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
-    os.close(fd)
-    db = sqlite3.connect(root / "sessions.sqlite3", timeout=0.1)
-    db.row_factory = sqlite3.Row
-    db.execute("PRAGMA busy_timeout=100")
+    """Open a caller-owned connection without disturbing SQLite's file locks."""
+    path = root / "sessions.sqlite3"
+    # Do not publish a new database to another connect_db thread until its
+    # creation descriptor is closed; a close in this process also drops locks
+    # acquired by a different thread. Different processes have separate locks.
+    with _DB_FILE_LOCK:
+        try:
+            # Closing any independently opened descriptor of an existing database
+            # drops every POSIX advisory lock this process holds on that inode.
+            fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        except FileExistsError:
+            info = path.lstat()
+            if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid():
+                raise ValueError("State database must be a regular file owned by this user")
+            path.chmod(0o600)
+        else:
+            os.close(fd)
+    db = sqlite3.connect(path.absolute().as_uri() + "?mode=rw", uri=True, timeout=0.1)
+    try:
+        db.row_factory = sqlite3.Row
+        db.execute("PRAGMA busy_timeout=100")
+    except BaseException:
+        db.close()
+        raise
     return db
+
+
+@contextmanager
+def session_db(root: Path):
+    """Commit or roll back a service operation and always close its connection."""
+    db = connect_db(root)
+    try:
+        with db:
+            yield db
+    finally:
+        db.close()
 
 
 def secure_db_files(root: Path) -> None:
@@ -118,7 +151,7 @@ class SessionService:
         state_root = Path(state_root).expanduser().absolute()
         private_directory(state_root)
         self.state_root = state_root.resolve()
-        with connect_db(self.state_root) as db:
+        with session_db(self.state_root) as db:
             db.execute("PRAGMA journal_mode=WAL")
             db.executescript("""
                 CREATE TABLE IF NOT EXISTS sessions (
@@ -213,7 +246,7 @@ class SessionService:
             raise ValueError("Launch arguments are too large")
         session_id = uuid.uuid4().hex
         fingerprint = hashlib.sha256(bootstrap + json.dumps(overrides, sort_keys=True).encode()).hexdigest()
-        with connect_db(self.state_root) as db:
+        with session_db(self.state_root) as db:
             db.execute("BEGIN IMMEDIATE")
             if request_id:
                 previous = db.execute("SELECT session_id,launch_fingerprint FROM sessions "
@@ -236,7 +269,7 @@ class SessionService:
                  str(self.state_root), session_id], stdin=subprocess.PIPE,
                 stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                 start_new_session=True, close_fds=True, env=env)
-            with connect_db(self.state_root) as db:
+            with session_db(self.state_root) as db:
                 update(db, session_id, worker_pid=worker.pid,
                        worker_start=process_identity(worker.pid))
             worker.stdin.write(bootstrap)
@@ -261,7 +294,7 @@ class SessionService:
                 except subprocess.TimeoutExpired:
                     worker.kill()
                     worker.wait()
-            with connect_db(self.state_root) as db:
+            with session_db(self.state_root) as db:
                 update(db, session_id, status="failed", error=str(exc), finished_at=time.time())
                 event(db, session_id, "error", {"message": str(exc), "phase": "startup"})
             return self.status(session_id)["session"]
@@ -275,7 +308,7 @@ class SessionService:
             raise ValueError("after must be a nonnegative event cursor")
         if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 1000:
             raise ValueError("limit must be between 1 and 1000")
-        with connect_db(self.state_root) as db:
+        with session_db(self.state_root) as db:
             session = self._session(db, session_id)
             rows = db.execute("SELECT * FROM events WHERE session_id=? AND cursor>? "
                               "ORDER BY cursor LIMIT ?", (session_id, after, limit)).fetchall()
@@ -287,13 +320,13 @@ class SessionService:
                 "earliest_cursor": first, "truncated": after < session["discarded_until"]}
 
     def list(self) -> list[dict]:
-        with connect_db(self.state_root) as db:
+        with session_db(self.state_root) as db:
             ids = db.execute("SELECT session_id FROM sessions ORDER BY created_at DESC").fetchall()
             return [self._session(db, row[0]) for row in ids]
 
     def lookup_request(self, request_id: str) -> dict:
         """Recover the durable job after an uncertain MCP response; never launch again."""
-        with connect_db(self.state_root) as db:
+        with session_db(self.state_root) as db:
             row = db.execute("SELECT session_id FROM sessions WHERE request_id=?",
                              (self._id(request_id),)).fetchone()
             if row is None:
@@ -373,7 +406,7 @@ class SessionService:
         if not live:
             return {"session_id": sid, "accepted": False, "status": "lost",
                     "reason": "No saved process identity is live; unobserved descendants are unknown"}
-        with connect_db(self.state_root) as db:
+        with session_db(self.state_root) as db:
             event(db, sid, "stop_requested", {"reason": "cancelled", "cleanup": "lost_worker"})
         try:
             if group and confirmed_group():
@@ -393,11 +426,11 @@ class SessionService:
             if remaining:
                 raise RuntimeError("Confirmed processes remain alive after cancellation")
         except (OSError, RuntimeError) as exc:
-            with connect_db(self.state_root) as db:
+            with session_db(self.state_root) as db:
                 update(db, sid, error=f"Lost-worker cleanup failed: {exc}")
                 event(db, sid, "error", {"message": str(exc), "phase": "lost_worker_cleanup"})
             raise RuntimeError("Lost-worker cleanup failed") from exc
-        with connect_db(self.state_root) as db:
+        with session_db(self.state_root) as db:
             update(db, sid, status="cancelled", finished_at=time.time(), input_closed=1,
                    error="Worker was lost; confirmed native processes were cancelled; exit is unknown")
             event(db, sid, "exit", {"status": "cancelled", "exit_unknown": True,
