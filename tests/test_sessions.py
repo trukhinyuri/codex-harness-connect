@@ -235,6 +235,28 @@ def test_concurrent_sessions_and_status_read_latency(service):
     assert len(service.list()) == 4
 
 
+def test_admission_waits_for_writer_without_duplicate_launch(service):
+    request_id = uuid.uuid4().hex
+    blocker = connect_db(service.state_root)
+    blocker.execute("BEGIN IMMEDIATE")
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(launch, service, "sleep", request_id=request_id)
+            try:
+                with pytest.raises(concurrent.futures.TimeoutError):
+                    future.result(timeout=0.3)
+            finally:
+                blocker.rollback()
+            job = future.result(timeout=5)
+    finally:
+        blocker.close()
+    replay = launch(service, "sleep", request_id=request_id)
+    assert replay["session_id"] == job["session_id"]
+    assert len(service.list()) == 1
+    with connect_db(service.state_root) as db:
+        assert db.execute("PRAGMA busy_timeout").fetchone()[0] == 100
+
+
 def test_bounded_events(service):
     job = launch(service, "burst")
     result = wait(service, job["session_id"], lambda r: r["session"]["status"] in TERMINAL, seconds=15)

@@ -1,6 +1,6 @@
 {
   "name": "harness-grok",
-  "version": "0.1.0-alpha.17",
+  "version": "0.1.0-alpha.18",
   "description": "Official Grok Build CLI. Entitlement alone does not prove the effective model/auth route. Native API-key/BYOK fallback must be excluded before launch. Discovery only until then.",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",

@@ -275,7 +275,12 @@ class SessionService:
         session_id = uuid.uuid4().hex
         fingerprint = hashlib.sha256(bootstrap + override_bytes).hexdigest()
         with session_db(self.state_root) as db:
+            # Admission may contend with other launches or a worker event write.
+            # Wait only before accepting the receipt; never retry a spawned job.
+            # Keep ordinary status reads on their existing short lock deadline.
+            db.execute("PRAGMA busy_timeout=2000")
             db.execute("BEGIN IMMEDIATE")
+            db.execute("PRAGMA busy_timeout=100")
             if request_id:
                 previous = db.execute("SELECT session_id,launch_fingerprint FROM sessions "
                                       "WHERE request_id=?", (request_id,)).fetchone()
