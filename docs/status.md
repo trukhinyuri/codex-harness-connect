@@ -75,6 +75,12 @@ unchanged baseline and all four files, terminal state and no live worker. Native
 retained; this result does not qualify their internal activity, human approvals, editing, teams or
 general permission parity. Account observations and raw transcripts remain private.
 
+The [first hosted alpha.8 run](https://github.com/trukhinyuri/codex-harness-connect/actions/runs/36850208828)
+passed three environments and exposed a scheduling assumption in an older waiting test on macOS/Python
+3.11. Its 250ms budget left only 50ms after polling for a second read. The corrected fixture explicitly
+reaches that pending read, expires its controlled deadline and verifies cancellation and replacement of
+the stale summary. The 65 waiting tests passed locally; runtime code is unchanged by this test correction.
+
 All five alpha.7 and all five alpha.8 immediate installation intervals preserved all ten configuration
 groups outside plugins/marketplaces. Existing default drift remains unexplained; preservation applies
 to each interval's starting settings. Prior wheels/marketplaces remain available for rollback. Further

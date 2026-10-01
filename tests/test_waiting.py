@@ -319,20 +319,63 @@ def test_sync_reader_does_not_block_event_loop():
     asyncio.run(scenario())
 
 
-def test_later_read_timeout_does_not_reuse_stale_success_as_an_error():
+def test_later_read_timeout_does_not_reuse_stale_success_as_an_error(monkeypatch):
+    from types import SimpleNamespace
+
+    from codex_harness_connect import waiting as waiting_module
+
     async def scenario():
-        calls = 0
+        calls = []
+        clock = 0.0
+        read_budgets = []
+        second_read_entered = asyncio.Event()
+        second_read_cancelled = asyncio.Event()
+        blocked = asyncio.Event()
 
         async def read(sid, after, limit):
-            nonlocal calls
-            calls += 1
-            if calls > 1:
-                await asyncio.sleep(10)
+            calls.append((sid, after, limit))
+            if len(calls) > 1:
+                second_read_entered.set()
+                try:
+                    await blocked.wait()
+                finally:
+                    second_read_cancelled.set()
             return status(sid, after)
 
+        async def poll_sleep(delay):
+            nonlocal clock
+            assert calls == [(SID, 0, 1)]
+            assert delay == 0.2
+            clock += delay
+
+        async def controlled_wait(reads, timeout):
+            nonlocal clock
+            read_budgets.append(timeout)
+            if len(read_budgets) == 1:
+                await asyncio.gather(*reads)
+                return set(reads), set()
+            assert len(read_budgets) == 2
+            await second_read_entered.wait()
+            assert all(not task.done() for task in reads)
+            clock += timeout
+            return set(), set(reads)
+
+        # Control only this module's polling clock/deadline result. Real tasks, events and
+        # cancellation still run; CI scheduler delay cannot skip the second read.
+        monkeypatch.setattr(waiting_module, "asyncio", SimpleNamespace(
+            get_running_loop=lambda: SimpleNamespace(time=lambda: clock),
+            create_task=asyncio.create_task, gather=asyncio.gather,
+            sleep=poll_sleep, wait=controlled_wait,
+        ))
         result = await wait_for_sessions([WaitTarget(session_id=SID)], read, 0.25)
+        assert calls == [(SID, 0, 1), (SID, 0, 1)]
+        assert read_budgets == pytest.approx([0.25, 0.05])
+        assert second_read_entered.is_set() and second_read_cancelled.is_set()
         assert result["reason"] == "error"
+        assert result["timed_out"] is False
         assert result["sessions"][0]["error"]["code"] == "read_timeout"
         assert result["sessions"][0]["status"] == "unknown"
+        assert "native_session_id" not in result["sessions"][0]
+        assert "worker_pid" not in result["sessions"][0]
 
     asyncio.run(scenario())
