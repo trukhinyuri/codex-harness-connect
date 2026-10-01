@@ -16,7 +16,7 @@ claims and generated artifacts.
 | GLM | Official supported-tool docs and subscription terms read; profile isolation design | Existing usable profile and this orchestration's use classification unverified; no inference |
 | agy/Hermes | Current Google docs/terms, installed1.2.14 help, pinned Hermes source | Applicable permission unresolved; no inference |
 | Local plugin installation | All five alpha.4 packages updated via installed CLI; cache matches generated packages; fresh stdio catalogs expose 14 router/13 scoped tools; current Desktop chat invoked new wait_sessions on an unavailable ID and revalidate_cli | Current-chat router/Claude wait discovery proved; refresh of every existing host server and full UI interactions unverified; UI automation denied access to Codex |
-| Hosted CI | [Alpha.3 baseline](https://github.com/trukhinyuri/codex-harness-connect/actions/runs/36826640678) passed all four macOS/Linux and Python 3.11/3.14 jobs. Check the exact current revision in the [CI runs](https://github.com/trukhinyuri/codex-harness-connect/actions/workflows/ci.yml) | Synthetic CI is not native vendor or Desktop UI qualification |
+| Hosted CI | [Alpha.4 runtime revision](https://github.com/trukhinyuri/codex-harness-connect/actions/runs/36830383639) passed all four macOS/Linux and Python 3.11/3.14 jobs. Check the exact current revision in the [CI runs](https://github.com/trukhinyuri/codex-harness-connect/actions/workflows/ci.yml) | Synthetic CI is not native vendor or Desktop UI qualification |
 
 Local account observations, absolute home paths, conversations and raw CLI readbacks are private and
 not published. The earlier alpha.2 installation readback preserved all ten configuration groups outside plugins/marketplaces.
@@ -82,3 +82,6 @@ its fresh revalidation took 5.589s and correctly invalidated alpha.3 runtime evi
 job was checked through separately installed stdio MCP; it was not launched in the native Desktop chat.
 Native approval rendering, teams, Cloud, policy holds and full macOS containment remain open.
 See [wait semantics](waiting.md) and [comparative source evidence](quality-roadmap.md).
+The [next native interaction contract](native-interaction-contract.md) identifies documented form input,
+provider consent boundaries and required acceptance. No native elicitation/approval broker is enabled
+in alpha.4; documented interfaces are not a successful live UI test.

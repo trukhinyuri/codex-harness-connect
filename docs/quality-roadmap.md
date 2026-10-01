@@ -38,6 +38,8 @@ proof that the projects cannot be improved. OpenAI protocol support does not end
 2. Typed progress/questions/approvals: preserve native request IDs and exact once/always choice scope.
    Reject stale/replayed IDs and require explicit user answers. Unknown terminal text remains unverified.
    Validate real deny/approve behavior and supported Desktop rendering on permitted provider routes.
+   The [native interaction contract](native-interaction-contract.md) defines the supported route and
+   remaining wire/UI evidence; it is not an enabled approval bridge.
 3. Truthful ownership/cleanup: distinguish native turn completion, leader exit, observed-tree cleanup
    and full OS containment. Re-run the exact escaped-daemon acceptance plus worker loss/PID reuse and
    an unrelated sentinel. A successful cancel acknowledgement is not proof of full cleanup.
