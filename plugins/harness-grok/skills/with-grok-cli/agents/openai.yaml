@@ -1,0 +1,3 @@
+interface:
+  display_name: "with_grok_cli"
+  short_description: "Local CLI delegation"

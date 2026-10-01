@@ -1,5 +1,5 @@
 ---
-name: use-claude-glm
+name: with-claude-cli-glm
 description: Delegate authorized local work to the unmodified claude-glm CLI through Harness Connect.
 ---
 

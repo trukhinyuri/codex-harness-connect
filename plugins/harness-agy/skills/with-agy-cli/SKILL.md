@@ -1,10 +1,10 @@
 ---
-name: use-grok
-description: Delegate authorized local work to the unmodified grok CLI through Harness Connect.
+name: with-agy-cli
+description: Delegate authorized local work to the unmodified agy CLI through Harness Connect.
 ---
 
-Use inventory_cli and describe_adapter before starting work. This package is for grok only.
-Policy: subscription-route-confirmation-required. Official Grok Build CLI. Entitlement alone does not prove the effective model/auth route. Native API-key/BYOK fallback must be excluded before launch. Discovery only until then.
+Use inventory_cli and describe_adapter before starting work. This package is for agy only.
+Policy: vendor-confirmation-required. Native headless CLI exists; Codex-to-agy service access is not confirmed permitted under the third-party-tool restriction. Discovery only for now.
 Keep the parent Codex task context and verify relevant AGENTS.md instructions. Pass required instructions,
 skill results and user-approved context explicitly in the prompt. Do not read or export hidden memory,
 credentials or settings. Native harness customizations are loaded by that harness itself.

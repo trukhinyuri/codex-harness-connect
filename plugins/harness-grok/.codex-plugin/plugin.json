@@ -1,12 +1,12 @@
 {
   "name": "harness-grok",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Official Grok Build CLI. Entitlement alone does not prove the effective model/auth route. Native API-key/BYOK fallback must be excluded before launch. Discovery only until then.",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
-    "displayName": "harness-grok",
-    "shortDescription": "Local CLI sessions and reviewed delegation",
+    "displayName": "with_grok_cli",
+    "shortDescription": "Local CLI delegation",
     "longDescription": "Official Grok Build CLI. Entitlement alone does not prove the effective model/auth route. Native API-key/BYOK fallback must be excluded before launch. Discovery only until then.",
     "developerName": "Yuri Trukhin",
     "category": "Productivity",

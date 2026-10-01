@@ -1,5 +1,5 @@
 ---
-name: connect-harness
+name: connect-cli
 description: Research an installed agent CLI, review its vendor terms and create a Codex harness plugin.
 ---
 

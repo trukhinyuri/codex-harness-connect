@@ -7,7 +7,7 @@ from pathlib import Path
 from .adapters import ADAPTERS, get_adapter
 
 RESEARCH_SKILL = """---
-name: connect-harness
+name: connect-cli
 description: Research an installed agent CLI, review its vendor terms and create a Codex harness plugin.
 ---
 
@@ -49,7 +49,11 @@ def _plugin_spec(destination: Path, profile: str | None, command: str) -> tuple[
         adapter = get_adapter(profile)
         name = f"harness-{profile}"
         description = adapter.notes
-        skill_name = f"use-{profile}"
+        display_name = f"with_{adapter.executable}_cli"
+        if profile != adapter.executable:
+            variant = profile.removeprefix(adapter.executable + "-").replace("-", "_")
+            display_name += f"_{variant}"
+        skill_name = display_name.replace("_", "-")
         body = f"""---
 name: {skill_name}
 description: Delegate authorized local work to the unmodified {profile} CLI through Harness Connect.
@@ -75,12 +79,13 @@ subagents, and child tools have their own permission enforcement. Policy-held ad
     else:
         name = "codex-harness-connect"
         description = "Research and connect local agent CLIs with explicit capability and policy evidence."
-        skill_name, body = "connect-harness", RESEARCH_SKILL
+        display_name = "connect_cli"
+        skill_name, body = "connect-cli", RESEARCH_SKILL
     args = ["serve"] + (["--profile", profile] if profile else [])
     manifest = {
-        "name": name, "version": "0.1.0-alpha.1", "description": description,
+        "name": name, "version": "0.1.0-alpha.2", "description": description,
         "skills": "./skills/", "mcpServers": "./.mcp.json",
-        "interface": {"displayName": name, "shortDescription": "Local CLI sessions and reviewed delegation",
+        "interface": {"displayName": display_name, "shortDescription": "Local CLI delegation",
                       "longDescription": description, "developerName": "Yuri Trukhin",
                       "category": "Productivity", "capabilities": ["Read", "Write"]},
     }
@@ -88,7 +93,11 @@ subagents, and child tools have their own permission enforcement. Policy-held ad
     files = {destination / ".codex-plugin/plugin.json": json.dumps(manifest, indent=2) + "\n",
              destination / ".mcp.json": json.dumps(
                  {"mcpServers": {server_name: {"command": command, "args": args}}}, indent=2) + "\n",
-             destination / "skills" / skill_name / "SKILL.md": body}
+             destination / "skills" / skill_name / "SKILL.md": body,
+             destination / "skills" / skill_name / "agents/openai.yaml":
+             "interface:\n"
+             f"  display_name: {json.dumps(display_name)}\n"
+             "  short_description: \"Local CLI delegation\"\n"}
     return ({"name": name, "path": str(destination), "profile": profile,
              "readiness": "package-generated; runtime and Desktop acceptance are separate gates"}, files)
 

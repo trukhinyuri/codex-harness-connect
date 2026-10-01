@@ -1,5 +1,5 @@
 ---
-name: use-claude
+name: with-claude-cli
 description: Delegate authorized local work to the unmodified claude CLI through Harness Connect.
 ---
 

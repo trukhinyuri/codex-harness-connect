@@ -62,6 +62,12 @@ The bundled marketplace contains `codex-harness-connect` and `harness-claude`, `
 `harness-grok`, `harness-agy`. Policy-held adapters expose evidence and discovery but cannot launch.
 Existing plugin directories/marketplaces are not overwritten by the generator.
 
+The configured display labels are `connect_cli`, `with_claude_cli`, `with_claude_cli_glm`, `with_grok_cli`,
+and `with_agy_cli`. Skill interface metadata preserves these labels literally; the host controls any
+additional namespace prefix in its UI. Package identifiers
+stay unchanged so existing installations can update without adding duplicate plugins. Skill identifiers
+use the equivalent hyphenated form, for example `with-claude-cli`, following the agent skill format.
+
 ## Verification
 
 Synthetic tests validate process lifecycle and MCP contracts without vendor inference. Real acceptance

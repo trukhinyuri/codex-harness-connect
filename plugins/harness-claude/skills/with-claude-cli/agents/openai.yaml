@@ -1,0 +1,3 @@
+interface:
+  display_name: "with_claude_cli"
+  short_description: "Local CLI delegation"
