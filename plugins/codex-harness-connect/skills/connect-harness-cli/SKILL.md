@@ -74,5 +74,7 @@ optional sanitized login diagnostic, not effective-route attestation or launch a
 Explicit invocation authorizes scoped native work; the CLI handles its own authentication and errors.
 Do not inject a model, provider, API fallback or settings override. Native permissions remain separate.
 Use native interactive mode for native terminal/teams features;
-TTY text is not the Codex internal subagent UI. No yolo, bypass permissions, auth-token extraction, hidden
-paid fallback or sharing credentials. Current policy holds must be resolved through vendor evidence.
+TTY text is not the Codex internal subagent UI. Never add yolo or permission-bypass options, extract
+auth tokens, read hidden memory, introduce a paid fallback or share credentials. Observing an existing
+native bypass mode does not prove the connector enabled it. Follow with_claude_cli for scoped mode
+selection and actual tool observation. Current policy holds require owning vendor evidence.

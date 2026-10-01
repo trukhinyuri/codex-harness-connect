@@ -99,8 +99,15 @@ def test_successful_batch_preserves_catalog_and_manifest_contract(tmp_path):
             assert not (directory / "skills/connect-cli").exists()
             assert "EVERY repeated invocation" in skill.read_text()
             assert "revalidate_cli on EVERY invocation" in skill.read_text()
+            assert "Never add yolo or permission-bypass options" in skill.read_text()
             assert "display_name: \"connect_harness_cli\"" in (
                 skill.parent / "agents/openai.yaml").read_text()
+        if item["name"] == "harness-claude":
+            instruction = (directory / "skills/with-claude-cli/SKILL.md").read_text()
+            assert "Do not automatically cancel a scoped no-tool review" in instruction
+            assert "prompt restriction is not sandbox enforcement" in instruction
+            assert "--permission-mode=default" in instruction
+            assert "Verify the effective native mode" in instruction
 
 
 def test_dangling_marketplace_symlink_is_not_overwritten(tmp_path):

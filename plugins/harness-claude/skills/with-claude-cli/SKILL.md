@@ -12,6 +12,13 @@ It does not attest to effective routing, quota or billing. Explicit invocation a
 or block on subscription plan changes. Reuse exact workspace trust already confirmed by the human.
 Keep unobserved billing facts unknown; never change billing/auth or introduce an API fallback.
 Native tool approvals remain separate and must follow the native permission mechanism.
+An observed native bypassPermissions mode or TUI label is not proof that the connector enabled it.
+Do not automatically cancel a scoped no-tool review solely because that label appears. Observe actual
+tool activity and respect the requested scope; a prompt restriction is not sandbox enforcement.
+When the task requires native tool review, explicitly use the supported per-launch
+--permission-mode=default option rather than changing global settings or requesting action approval again.
+Verify the effective native mode; never claim default/auto is active from the supplied option alone.
+Never inject a bypass option or weaken permissions to recover a failed or denied action.
 Keep the parent Codex task context and verify relevant AGENTS.md instructions. Pass required instructions,
 skill results and user-approved context explicitly in the prompt. Do not read or export hidden memory,
 credentials or settings. Native harness customizations are loaded by that harness itself.
