@@ -15,7 +15,7 @@ claims and generated artifacts.
 | Grok | Official docs/source, installed 1.0.44 alpha help/inspect; prepared JSON contract | Native effective auth/model route and absence of paid fallback unproven; no inference |
 | GLM | Official supported-tool docs and subscription terms read; profile isolation design | Existing usable profile and this orchestration's use classification unverified; no inference |
 | agy/Hermes | Current Google docs/terms, installed1.2.14 help, pinned Hermes source | Applicable permission unresolved; no inference |
-| Local plugin installation | All five alpha.4 packages updated via installed CLI; cache matches generated packages; fresh stdio catalogs expose 14 router/13 scoped tools; current Desktop chat invoked new wait_sessions on an unavailable ID and revalidate_cli | Current-chat router/Claude wait discovery proved; refresh of every existing host server and full UI interactions unverified; UI automation denied access to Codex |
+| Local plugin installation | All five alpha.4 packages updated via installed CLI; cache matches generated packages; fresh stdio catalogs expose 14 router/13 scoped tools; current Desktop chat discovered and invoked wait_sessions in all five scopes on an unavailable ID, plus router revalidate_cli | New API loading/invocation proved; valid synthetic jobs tested in installed stdio, full native UI interactions unverified; UI automation denied access to Codex |
 | Hosted CI | [Alpha.4 runtime revision](https://github.com/trukhinyuri/codex-harness-connect/actions/runs/36830383639) passed all four macOS/Linux and Python 3.11/3.14 jobs. Check the exact current revision in the [CI runs](https://github.com/trukhinyuri/codex-harness-connect/actions/workflows/ci.yml) | Synthetic CI is not native vendor or Desktop UI qualification |
 
 Local account observations, absolute home paths, conversations and raw CLI readbacks are private and
@@ -80,6 +80,8 @@ On the installed wheel, the same quiet stdin-gated synthetic child was observed 
 speed guarantees. No AI requests were made. A current Desktop chat's unavailable-ID wait took 0.028s;
 its fresh revalidation took 5.589s and correctly invalidated alpha.3 runtime evidence. A valid synthetic
 job was checked through separately installed stdio MCP; it was not launched in the native Desktop chat.
+After host catalog refresh, all five current-chat wait tools returned the expected scoped unavailable
+result in 0.039–0.064s. This tests new API loading and error handling, not a native provider task or UI card.
 Native approval rendering, teams, Cloud, policy holds and full macOS containment remain open.
 See [wait semantics](waiting.md) and [comparative source evidence](quality-roadmap.md).
 The [next native interaction contract](native-interaction-contract.md) identifies documented form input,
