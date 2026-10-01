@@ -18,7 +18,7 @@ DEFAULT_STATE_ROOT = (Path(_state_home) if os.path.isabs(_state_home)
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--version", action="version", version="0.1.0a15")
+    parser.add_argument("--version", action="version", version="0.1.0a16")
     sub = parser.add_subparsers(dest="command", required=True)
     probe = sub.add_parser("inventory")
     probe.add_argument("executable", help="User-designated trusted installed CLI")

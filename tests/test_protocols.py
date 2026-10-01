@@ -453,3 +453,13 @@ def test_native_init_permission_mode_is_observed_without_granting_approval(mode)
     assert event["permission_mode"] == (mode if known else None)
     assert event["permission_mode_observed"] is known
     assert parser.finish(0)["semantic_status"] == "unknown"
+
+
+def test_tool_metadata_omits_inputs_results_and_thinking():
+    parser = ClaudeStreamParser()
+    block = {"type":"tool_use", "id":"tool1", "name":"Read", "input":{"secret":"PRIVATE"}}
+    events = parser.feed(wire(INIT, {"type":"assistant", "message":{"content":[block]*40}},
+         {"type":"user", "message":{"content":[{"type":"tool_result", "tool_use_id":"tool1", "is_error":True, "content":"PRIVATE"}]}}))
+    assert len(events[1]["tools"]) == 32 and events[1]["content_truncated"]
+    assert events[2]["tools"] == [{"tool_use_id":"tool1","is_error":True}]
+    assert "PRIVATE" not in json.dumps(events)

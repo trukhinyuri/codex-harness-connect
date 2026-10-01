@@ -11,7 +11,10 @@ durable local job state, expose progress and terminal input through MCP, and sup
 worktrees. A research skill inventories the installed version and requires primary documentation,
 terms review, capability evidence and real acceptance tests before a new harness is labelled ready.
 The [cursor wait tool](docs/waiting.md) observes up to eight existing jobs with compact responses;
-transcripts are read explicitly when events become available.
+Routine updates use `session_events(progress_only=true)`: bounded native model/permission mode,
+workflow agents, tool names and error flags, without raw stdout, tool inputs or final report text.
+Full transcripts are read only for scoped verification. Projection preserves pagination cursors;
+an empty projected page may still advance past omitted output.
 The [interaction check](docs/native-interaction-contract.md) tests a connected client's standard
 MCP question form without launching a model or granting native tool permission.
 Claude uses its existing native model, provider, login and settings. The connector does not gate

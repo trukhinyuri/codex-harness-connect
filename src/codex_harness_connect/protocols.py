@@ -311,13 +311,19 @@ class ClaudeStreamParser:
                     if isinstance(block, dict)
                 ]
             )
-            return [
-                {
-                    "kind": kind,
-                    "content_types": block_types,
-                    "parent_tool_use_id": _bounded_text(item.get("parent_tool_use_id")),
-                }
-            ]
+            tools = []
+            for block in content[:32] if isinstance(content, list) else []:
+                if not isinstance(block, dict):
+                    continue
+                if kind == "assistant" and block.get("type") == "tool_use":
+                    tools.append({"id": _bounded_text(block.get("id"), 128),
+                                  "name": _bounded_text(block.get("name"), 128)})
+                elif kind == "user" and block.get("type") == "tool_result":
+                    tools.append({"tool_use_id": _bounded_text(block.get("tool_use_id"), 128),
+                                  "is_error": block.get("is_error") if type(block.get("is_error")) is bool else None})
+            return [{"kind": kind, "content_types": block_types,
+                     "parent_tool_use_id": _bounded_text(item.get("parent_tool_use_id")),
+                     "tools": tools, "content_truncated": isinstance(content, list) and len(content) > 32}]
         if kind == "stream_event":
             event = item.get("event")
             if not isinstance(event, dict):

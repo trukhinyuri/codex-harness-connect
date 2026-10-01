@@ -22,6 +22,33 @@ READ = ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=F
 WRITE = ToolAnnotations(readOnlyHint=False, destructiveHint=True, openWorldHint=True)
 
 
+def progress_page(page: dict) -> dict:
+    """Project normalized metadata only; transcript payloads require explicit full reads."""
+    session = page["session"]
+    result = {key: page[key] for key in ("next_cursor", "earliest_cursor", "truncated", "payloads_omitted") if key in page}
+    result["session"] = {key: session[key] for key in (
+        "session_id", "status", "mode", "cwd", "native_session_id", "semantic_status",
+        "live", "worker_alive", "heartbeat_fresh", "exit_code", "exit_signal",
+        "termination_scope", "full_process_containment_verified") if key in session}
+    result["session"]["error_present"] = bool(session.get("error"))
+    allowed = {"init": {"native_session_id", "identity_verified", "model", "permission_mode", "permission_mode_observed"},
+               "assistant": {"tools", "parent_tool_use_id", "content_truncated"},
+               "user": {"tools", "parent_tool_use_id", "content_truncated"},
+               "task_progress": {"task_id", "description", "agents", "agents_truncated", "task_acceptance"},
+               "result": {"native_session_id", "identity_verified", "subtype", "is_error", "semantic_status", "permission_denial_count", "deferred_tool_use", "api_error_status", "task_acceptance"}}
+    result["events"] = []
+    for event in page.get("events", []):
+        data = event.get("data", {})
+        if event.get("kind") != "native_protocol" or data.get("kind") not in allowed:
+            continue
+        kind = data["kind"]
+        result["events"].append({"cursor": event["cursor"], "kind": "native_protocol",
+                                 "data": {"kind": kind, **{key: data[key] for key in allowed[kind] if key in data}}})
+    result["progress_only"] = True
+    result["transcript_payloads_omitted"] = True
+    return result
+
+
 def build_server(state_root: Path, profile: str | None = None) -> FastMCP:
     if profile:
         get_adapter(profile)
@@ -148,9 +175,11 @@ def build_server(state_root: Path, profile: str | None = None) -> FastMCP:
         return pools[adapter].lookup_request(request_id)
 
     @server.tool(annotations=READ)
-    def session_events(session_id: str, after: int = 0, limit: int = 100) -> dict:
+    def session_events(session_id: str, after: int = 0, limit: int = 100,
+                       progress_only: bool = False) -> dict:
         """Read live state plus a durable bounded event page; retain next_cursor for reconnect."""
-        return owner(session_id).status(session_id, after, limit)
+        page = owner(session_id).status(session_id, after, limit)
+        return progress_page(page) if progress_only else page
 
     @server.tool(annotations=READ)
     async def wait_sessions(

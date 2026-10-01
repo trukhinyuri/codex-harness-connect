@@ -1,6 +1,6 @@
 {
   "name": "harness-agy",
-  "version": "0.1.0-alpha.15",
+  "version": "0.1.0-alpha.16",
   "description": "Native headless CLI exists; Codex-to-agy service access is not confirmed permitted under the third-party-tool restriction. Discovery only for now.",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",

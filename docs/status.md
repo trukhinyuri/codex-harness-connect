@@ -186,19 +186,25 @@ macOS/Linux and Python 3.11/3.14 jobs; later documentation revisions have their 
 
 ## Current source candidate (2026-10-01)
 
-Alpha.15 passed the full 551-test suite and 74 subtests, plus Ruff. Its installed wheel and official
+Alpha.16 passed the full 553-test suite and 74 subtests, plus Ruff. Its installed wheel and official
 Claude plugin installation were checked. Twelve nonplugin configuration groups were unchanged.
 The separate GLM plugin was uninstalled and removed from the generated/published catalog at the user's
 request. Claude now uses its current native model/provider/settings without subscription-route launch gates.
 No auth, model/provider, billing or security setting was changed. Native permissions remain native.
 
-Current Desktop readback reported loaded source alpha.14. The alpha.15 plugin points to a separate
+Current Desktop readback reported loaded source alpha.14. The alpha.16 plugin points to a separate
 version runtime. Fresh installed stdio matched all 18 source modules and four catalogs. One actual
 native-default no-tool task returned typed success READY, model claude-opus-5-5 and bypassPermissions.
 That permission mode came from native defaults, not an injected option. Native autoreview and current
-Desktop loading of alpha.15 remain unverified.
+Desktop loading of alpha.16 remain unverified.
 
 A complete native Ultracode review of the earlier 84-file snapshot returned findings from three reviewers
 and a verifier. One reviewer invoked a prohibited harmless shell command; this is evidence of review,
 not proof that prompt restrictions enforce permission policy. The candidate remains uncommitted, with
 no exact-revision public CI. Production gates remain open.
+
+Alpha.16 adds bounded tool metadata and an optional progress-only event projection. Fresh installed
+stdio matched all 18 modules and four catalogs. A real completed native job was drained through the
+projection: nine normalized events, preserved cursor 56994, no raw output or final report text, zero
+new model requests. Legacy events retain their originally recorded metadata; missing older tool names
+are not invented. The full raw transcript remains available for explicit scoped verification.

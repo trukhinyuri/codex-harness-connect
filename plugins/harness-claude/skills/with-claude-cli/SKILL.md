@@ -17,7 +17,10 @@ skill results and user-approved context explicitly in the prompt. Do not read or
 credentials or settings. Native harness customizations are loaded by that harness itself.
 For native approvals or native team features, use interactive PTY; don't claim print mode supports them.
 Use start_session once, then wait_sessions with acknowledged cursors and drain session_events when
-changes are available. Waiting never launches/resumes/cancels native jobs and does not consume events.
+changes are available. Use session_events(progress_only=true) for routine progress: it omits raw
+transcript, result text and hook output while preserving page cursors. Drain through unchanged cursor,
+even when a projected page contains no visible events. Use full transcript only for explicit scoped
+verification; never publish unrelated private native context. Waiting does not consume events.
 Keep OS job id and native conversation
 id separate. Choose and retain a fresh 32-character lowercase hex request_id before launching; recover an
 uncertain response with lookup_request. Never automatically restart a job whose outcome is uncertain.
