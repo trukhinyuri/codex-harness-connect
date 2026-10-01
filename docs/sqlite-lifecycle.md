@@ -25,7 +25,10 @@ The fixture only waited for retention to begin, allowing its lock attempt to ove
 waits for the persisted tail marker, confirms the live native process identities, makes one bounded
 lock attempt, and asserts an active transaction before checking shutdown. Only the injector's wait
 increases to one second; the production worker's 100ms busy timeout is unchanged. Failure remains fatal
-and reports the SQLite version and extended code. The new hosted result remains an acceptance gate.
+and reports the SQLite version and extended code.
 The naming revision's subsequent run passed all four jobs before this synchronization change;
 the setup failure is intermittent, so that pass does not replace qualification of the corrected fixture.
+The [corrected fixture revision](https://github.com/trukhinyuri/codex-harness-connect/actions/runs/36822472887)
+then passed all four macOS/Linux and Python 3.11/3.14 jobs. This is hosted regression evidence for the
+corrected code and test setup, not proof of the exact original failure's cause or native vendor readiness.
 This correction does not solve the separately documented macOS daemon-containment limitation.
