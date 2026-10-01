@@ -149,7 +149,8 @@ def test_scoped_profile_cannot_read_or_control_other_adapter(tmp_path):
                 assert not (state / "revalidation").exists()
                 result = await session.call_tool("list_sessions", {})
                 assert result.isError is False
-                assert json.loads(result.content[0].text) == {"sessions": []}
+                page = json.loads(result.content[0].text)
+                assert page["sessions"] == [] and page["next_cursor"] is None and not page["has_more"]
                 hidden_wait = await session.call_tool("wait_sessions", {
                     "targets": [{"session_id": job["session_id"], "after": 0}],
                     "timeout_seconds": 0,

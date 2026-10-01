@@ -46,3 +46,11 @@ proof that the projects cannot be improved. OpenAI protocol support does not end
 
 Comparative runtime superiority, p95 latency and all original production gates remain unproven.
 Implementations must not trade security or vendor permission for a more native-looking interface.
+
+## Alpha.5 reliability step
+
+[Storage boundaries](storage.md) add finite transactional admission with permanent recovery receipts,
+byte-aware payload retention, durable native outcome snapshots and compact history pagination.
+Installed synthetic MCP checks and independent review verify their stated scope. Full physical disk
+bounds, mixed-version worker parity, native UI/teams, escaped-daemon containment and vendor holds
+remain open; this step does not close the original production gates.

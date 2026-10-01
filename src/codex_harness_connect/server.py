@@ -10,6 +10,7 @@ from pydantic import Field
 
 from .adapters import ADAPTERS, get_adapter, launch_contract
 from .discovery import inventory
+from .history import list_history
 from .revalidation import revalidate
 from .sessions import SessionService
 from .waiting import WaitTarget, wait_for_sessions
@@ -156,10 +157,23 @@ def build_server(state_root: Path, profile: str | None = None) -> FastMCP:
         return await wait_for_sessions(targets, read_status, timeout_seconds=timeout_seconds)
 
     @server.tool(annotations=READ)
-    def list_sessions() -> dict:
-        """List connector jobs; no vendor inference request."""
-        return {"sessions": [{**job, "adapter": name} for name, service in pools.items()
-                             for job in service.list()]}
+    def list_sessions(
+        adapter: Annotated[str | None, Field(strict=True, max_length=32)] = None,
+        limit: Annotated[int, Field(strict=True, ge=1, le=50)] = 20,
+        cursor: Annotated[str | None, Field(strict=True, max_length=65)] = None,
+    ) -> dict:
+        """List at most 50 compact connector jobs in at most 64 KiB; no model request.
+
+        Adapters sort alphabetically; jobs sort by created_at/session_id descending
+        within an adapter. Pass next_cursor unchanged for continuation. Selecting
+        an adapter requires a cursor from that adapter. Cursors name existing jobs.
+        """
+        return list_history(pools, adapter=adapter, limit=limit, cursor=cursor)
+
+    @server.tool(annotations=READ)
+    def storage_status(adapter: str) -> dict:
+        """Read capacity, logical event budgets and measured DB/WAL bytes; no cleanup."""
+        return pools[selected(adapter)].storage_status()
 
     @server.tool(annotations=WRITE)
     def send_input(session_id: str, text: str) -> dict:

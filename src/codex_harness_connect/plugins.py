@@ -68,6 +68,9 @@ does not prove the child exited. Confirm cancellation with authoritative state. 
 model request after an uncertain outcome. Choose a fresh 32-character lowercase hex request_id before
 start_session or resume_session; retain it before calling. Use lookup_request after an uncertain response.
 The same request id and identical launch returns the existing job, never another inference process.
+Use storage_status to inspect finite receipt capacity and retention gaps. At capacity recover existing
+IDs; never delete receipts, rotate stores automatically or retry an uncertain request in another store.
+list_sessions is a compact bounded page: retain its next_cursor while has_more is true.
 Batch requires the exact resolved workspace path explicitly acknowledged by the user as trusted because
 Claude --print skips its trust dialog. Never invent that acknowledgement or treat it as tool approval.
 Use native interactive mode for native terminal/teams features;
@@ -118,7 +121,7 @@ subagents, and child tools have their own permission enforcement. Policy-held ad
         skill_name, body = "connect-harness-cli", RESEARCH_SKILL
     args = ["serve"] + (["--profile", profile] if profile else [])
     manifest = {
-        "name": name, "version": "0.1.0-alpha.4", "description": description,
+        "name": name, "version": "0.1.0-alpha.5", "description": description,
         "skills": "./skills/", "mcpServers": "./.mcp.json",
         "interface": {"displayName": display_name, "shortDescription": "Local CLI delegation",
                       "longDescription": description, "developerName": "Yuri Trukhin",

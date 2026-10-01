@@ -29,6 +29,9 @@ review. The `connect_harness_cli` skill requires the parent agent to perform a f
 maintenance workflow on every invocation, as described in [revalidation](docs/revalidation.md). An unchanged fingerprint does
 not replace current policy review or native acceptance. Native credentials/settings remain owned by each vendor CLI.
 
+Long-running jobs use durable request receipts, cursor waits and bounded event retention. Review
+[storage and recovery](docs/storage.md) for capacity exhaustion, history pagination and upgrade limits.
+
 ## Host boundaries
 
 Codex's own skills, AGENTS.md handling, memory, plugins, project context, worktrees and review tools

@@ -29,6 +29,7 @@ from codex_harness_connect.sessions import (
     socket_path,
     update,
 )
+from codex_harness_connect.storage import bounded_outcome, encoded
 
 
 def _descendants(parent: int, group: int | None = None) -> dict[int, str]:
@@ -273,7 +274,8 @@ def main() -> None:
                 with db:
                     update(db, session_id, heartbeat=time.time(), process_members=json.dumps(
                         {str(pid): identity for pid, identity in
-                         tuple(tracked.items())[:MAX_TRACKED_PROCESSES]}))
+                         tuple(tracked.items())[:MAX_TRACKED_PROCESSES]}),
+                         process_members_truncated=int(len(tracked) > MAX_TRACKED_PROCESSES))
                 heartbeat_at = now + 0.2
             if signal_stop:
                 begin_stop("cancelled")
@@ -352,7 +354,8 @@ def main() -> None:
                 update(db, session_id,
                        native_session_id=outcome["native_session_id"]
                        if outcome["identity_verified"] else None,
-                       semantic_status=outcome["semantic_status"])
+                       semantic_status=outcome["semantic_status"],
+                       native_outcome=encoded(bounded_outcome(outcome)))
                 event(db, session_id, "native_outcome", outcome)
             update(db, session_id, status=stopping, finished_at=time.time(),
                 exit_code=code if code is not None and code >= 0 else None,

@@ -18,6 +18,8 @@ import uuid
 from contextlib import contextmanager
 from pathlib import Path
 
+from . import storage
+
 TERMINAL = frozenset({"completed", "failed", "cancelled", "timed_out", "lost"})
 MAX_EVENTS = 1024
 MAX_TOTAL_EVENTS = 10000
@@ -122,25 +124,23 @@ def secure_db_files(root: Path) -> None:
 
 
 def event(db: sqlite3.Connection, session_id: str, kind: str, data: dict) -> None:
-    db.execute("INSERT INTO events(session_id,kind,data,created_at) VALUES(?,?,?,?)",
-               (session_id, kind, json.dumps(data, ensure_ascii=False), time.time()))
-    cutoff = db.execute("SELECT cursor FROM events WHERE session_id=? "
-                        "ORDER BY cursor DESC LIMIT 1 OFFSET ?", (session_id, MAX_EVENTS)).fetchone()
-    if cutoff:
+    payload = storage.encoded(data)
+    size = len(payload.encode("utf-8"))
+    omitted = size > storage.MAX_EVENT_BYTES
+    if omitted:
+        payload = storage.encoded({"payload_omitted": True, "original_payload_bytes": size})
+    inserted = db.execute("INSERT INTO events(session_id,kind,data,created_at,payload_bytes) "
+                          "VALUES(?,?,?,?,?)", (session_id, kind, payload, time.time(),
+                                                len(payload.encode("utf-8"))))
+    if omitted:
         db.execute("UPDATE sessions SET discarded_until=MAX(discarded_until,?) WHERE session_id=?",
-                   (cutoff[0], session_id))
-        db.execute("DELETE FROM events WHERE session_id=? AND cursor<=?", (session_id, cutoff[0]))
-    cutoff = db.execute("SELECT cursor FROM events ORDER BY cursor DESC LIMIT 1 OFFSET ?",
-                        (MAX_TOTAL_EVENTS,)).fetchone()
-    if cutoff:
-        dropped = db.execute("SELECT session_id,MAX(cursor) FROM events WHERE cursor<=? "
-                             "GROUP BY session_id", (cutoff[0],)).fetchall()
-        db.executemany("UPDATE sessions SET discarded_until=MAX(discarded_until,?) WHERE session_id=?",
-                       [(cursor, sid) for sid, cursor in dropped])
-        db.execute("DELETE FROM events WHERE cursor<=?", (cutoff[0],))
+                   (inserted.lastrowid, session_id))
+    storage.retain(db, session_id, MAX_EVENTS, MAX_TOTAL_EVENTS)
 
 
 def update(db: sqlite3.Connection, session_id: str, **fields) -> None:
+    if fields.get("error") is not None:
+        fields["error"], fields["error_truncated"] = storage.byte_preview(fields["error"], 4096)
     keys = tuple(fields)
     db.execute("UPDATE sessions SET " + ",".join(f"{key}=?" for key in keys)
                + " WHERE session_id=?", (*fields.values(), session_id))
@@ -170,15 +170,23 @@ class SessionService:
                     data TEXT NOT NULL, created_at REAL NOT NULL);
                 CREATE INDEX IF NOT EXISTS events_session ON events(session_id,cursor);
             """)
+            # executescript commits implicitly. Start a fresh write transaction
+            # BEFORE ALTER: schema and counter backfill must roll back together.
+            db.execute("BEGIN IMMEDIATE")
             if "discarded_until" not in {row[1] for row in db.execute("PRAGMA table_info(sessions)")}:
                 db.execute("ALTER TABLE sessions ADD COLUMN discarded_until INTEGER NOT NULL DEFAULT 0")
             if "process_members" not in {row[1] for row in db.execute("PRAGMA table_info(sessions)")}:
                 db.execute("ALTER TABLE sessions ADD COLUMN process_members TEXT NOT NULL DEFAULT '{}'")
             columns = {row[1] for row in db.execute("PRAGMA table_info(sessions)")}
-            for column in ("request_id", "launch_fingerprint", "protocol", "semantic_status"):
+            for column in ("request_id", "launch_fingerprint", "protocol", "semantic_status",
+                           "native_outcome"):
                 if column not in columns:
                     db.execute(f"ALTER TABLE sessions ADD COLUMN {column} TEXT")
+            for column in ("error_truncated", "process_members_truncated"):
+                if column not in columns:
+                    db.execute(f"ALTER TABLE sessions ADD COLUMN {column} INTEGER NOT NULL DEFAULT 0")
             db.execute("CREATE UNIQUE INDEX IF NOT EXISTS sessions_request ON sessions(request_id)")
+            storage.initialize(db)
         secure_db_files(self.state_root)
 
     @staticmethod
@@ -211,6 +219,12 @@ class SessionService:
         result["heartbeat_fresh"] = bool(result["heartbeat"] and
                                           time.time() - result["heartbeat"] < 5)
         result["process_members"] = json.loads(result["process_members"])
+        result["native_outcome"] = (json.loads(result["native_outcome"])
+                                    if result["native_outcome"] else None)
+        usage = db.execute("SELECT event_count,event_bytes FROM event_usage WHERE session_id=?",
+                           (session_id,)).fetchone()
+        result["event_count"], result["event_bytes"] = tuple(usage) if usage else (0, 0)
+        result["history_truncated"] = result["discarded_until"] > 0
         result["live"] = bool(result["worker_alive"] and result["heartbeat_fresh"]
                               and result["status"] not in TERMINAL)
         result["termination_scope"] = "native leader and observed descendants; not full OS containment"
@@ -228,6 +242,8 @@ class SessionService:
             raise ValueError("Mode must be pipe or pty on Linux or macOS")
         if not isinstance(cwd, str) or not os.path.isabs(cwd) or "\0" in cwd:
             raise ValueError("cwd must be an absolute path")
+        if len(cwd.encode("utf-8")) > 4096 or len(Path(argv[0]).name.encode("utf-8")) > 1024:
+            raise ValueError("Launch path metadata exceeds its byte limit")
         if (isinstance(timeout_seconds, bool) or not isinstance(timeout_seconds, (int, float))
                 or not 0 < timeout_seconds <= 86400):
             raise ValueError("timeout_seconds must be positive and at most 86400")
@@ -242,10 +258,11 @@ class SessionService:
             raise ValueError("Unsupported native output protocol for this mode")
         bootstrap = json.dumps({"argv": argv, "cwd": cwd, "mode": mode,
                                 "timeout_seconds": timeout_seconds, "protocol": protocol}).encode()
-        if len(bootstrap) > 256 * 1024:
+        override_bytes = json.dumps(overrides, sort_keys=True).encode()
+        if len(bootstrap) > 256 * 1024 or len(override_bytes) > 256 * 1024:
             raise ValueError("Launch arguments are too large")
         session_id = uuid.uuid4().hex
-        fingerprint = hashlib.sha256(bootstrap + json.dumps(overrides, sort_keys=True).encode()).hexdigest()
+        fingerprint = hashlib.sha256(bootstrap + override_bytes).hexdigest()
         with session_db(self.state_root) as db:
             db.execute("BEGIN IMMEDIATE")
             if request_id:
@@ -255,6 +272,9 @@ class SessionService:
                     if previous["launch_fingerprint"] != fingerprint:
                         raise ValueError("Request ID already belongs to a different launch")
                     return self._session(db, previous["session_id"])
+            capacity = db.execute("SELECT session_capacity FROM storage_policy WHERE id=1").fetchone()[0]
+            if db.execute("SELECT COUNT(*) FROM sessions").fetchone()[0] >= capacity:
+                raise storage.StorageCapacityError(capacity)
             db.execute("INSERT INTO sessions(session_id,status,mode,cwd,executable,created_at,"
                        "request_id,launch_fingerprint,protocol,semantic_status) "
                        "VALUES(?,?,?,?,?,?,?,?,?,?)", (session_id, "starting", mode, cwd,
@@ -304,25 +324,69 @@ class SessionService:
                 worker.poll()
 
     def status(self, session_id: str, after: int = 0, limit: int = 100) -> dict:
-        if isinstance(after, bool) or not isinstance(after, int) or after < 0:
-            raise ValueError("after must be a nonnegative event cursor")
+        if type(after) is not int or not 0 <= after <= storage.MAX_CURSOR:
+            raise ValueError("after must be a nonnegative signed 64-bit event cursor")
         if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 1000:
             raise ValueError("limit must be between 1 and 1000")
         with session_db(self.state_root) as db:
             session = self._session(db, session_id)
             rows = db.execute("SELECT * FROM events WHERE session_id=? AND cursor>? "
-                              "ORDER BY cursor LIMIT ?", (session_id, after, limit)).fetchall()
+                              "ORDER BY cursor LIMIT ?", (session_id, after, limit))
+            events, page_bytes, omitted = [], 0, False
+            for row in rows:
+                item = dict(row)
+                # Legacy history is not deleted during migration. Oversized legacy
+                # payloads are disclosed without exporting an unbounded response.
+                item["data"] = (json.loads(row["data"]) if row["payload_bytes"] <= storage.MAX_EVENT_BYTES
+                                else {"payload_omitted": True,
+                                      "original_payload_bytes": row["payload_bytes"]})
+                serialized = json.dumps(item, indent=2)
+                # MCP's pretty text content indents an event inside the page.
+                item_bytes = len(serialized.encode()) + 6 * (serialized.count("\n") + 1) + 2
+                if events and page_bytes + item_bytes > storage.MAX_STATUS_EVENT_BYTES:
+                    break
+                events.append(item)
+                page_bytes += item_bytes
+                omitted |= bool(item["data"].get("payload_omitted"))
+            rows.close()
             first = db.execute("SELECT MIN(cursor) FROM events WHERE session_id=?",
                                (session_id,)).fetchone()[0]
-        events = [{**dict(row), "data": json.loads(row["data"])} for row in rows]
         return {"session": session, "events": events,
-                "next_cursor": events[-1]["cursor"] if events else after,
-                "earliest_cursor": first, "truncated": after < session["discarded_until"]}
+                "next_cursor": events[-1]["cursor"] if events else max(after, session["discarded_until"]),
+                "earliest_cursor": first, "truncated": after < session["discarded_until"],
+                "payloads_omitted": omitted}
 
     def list(self) -> list[dict]:
+        """Compatibility helper for a bounded first page; use list_page to continue."""
+        return self.list_page()["sessions"]
+
+    def list_page(self, limit: int = 20, before_session_id: str | None = None) -> dict:
+        if type(limit) is not int or not 1 <= limit <= 50:
+            raise ValueError("History limit must be between 1 and 50")
         with session_db(self.state_root) as db:
-            ids = db.execute("SELECT session_id FROM sessions ORDER BY created_at DESC").fetchall()
-            return [self._session(db, row[0]) for row in ids]
+            where, args = "", ()
+            if before_session_id is not None:
+                row = db.execute("SELECT created_at FROM sessions WHERE session_id=?",
+                                 (self._id(before_session_id),)).fetchone()
+                if row is None:
+                    raise ValueError("Unknown history cursor")
+                where = "WHERE (created_at,session_id)<(?,?) "
+                args = (row[0], before_session_id)
+            ids = db.execute("SELECT session_id FROM sessions " + where +
+                             "ORDER BY created_at DESC,session_id DESC LIMIT ?", (*args, limit + 1)).fetchall()
+            keys = ("session_id", "request_id", "status", "mode", "created_at", "started_at",
+                    "finished_at", "native_session_id", "semantic_status", "worker_alive", "live",
+                    "exit_code", "exit_signal", "history_truncated", "event_count", "event_bytes",
+                    "full_process_containment_verified")
+            jobs = []
+            for row in ids[:limit]:
+                session = self._session(db, row[0])
+                jobs.append({**{key: session[key] for key in keys},
+                             "has_native_outcome": session["native_outcome"] is not None,
+                             "task_acceptance": "requires-parent-verification"})
+        more = len(ids) > limit
+        return {"sessions": jobs, "has_more": more,
+                "next_cursor": jobs[-1]["session_id"] if more else None}
 
     def lookup_request(self, request_id: str) -> dict:
         """Recover the durable job after an uncertain MCP response; never launch again."""
@@ -332,6 +396,35 @@ class SessionService:
             if row is None:
                 raise KeyError("Unknown request ID")
             return self._session(db, row[0])
+
+    def storage_status(self) -> dict:
+        """Measure logical retention and private files; no checkpoint or cleanup."""
+        with session_db(self.state_root) as db:
+            capacity = db.execute("SELECT session_capacity FROM storage_policy WHERE id=1").fetchone()[0]
+            sessions = db.execute("SELECT COUNT(*) FROM sessions").fetchone()[0]
+            count, size = db.execute("SELECT event_count,event_bytes FROM event_totals WHERE id=1").fetchone()
+            oversized = bool(db.execute("SELECT 1 FROM event_usage WHERE event_count>? OR event_bytes>? "
+                                        "LIMIT 1", (MAX_EVENTS, storage.MAX_SESSION_EVENT_BYTES)).fetchone()
+                             or db.execute("SELECT 1 FROM events WHERE payload_bytes>? LIMIT 1",
+                                           (storage.MAX_EVENT_BYTES,)).fetchone())
+        files = {}
+        for label, name in (("database", "sessions.sqlite3"), ("wal", "sessions.sqlite3-wal"),
+                            ("shared_memory", "sessions.sqlite3-shm")):
+            try:
+                files[label] = (self.state_root / name).lstat().st_size
+            except FileNotFoundError:
+                files[label] = 0
+        return {"policy_version": 1, "session_capacity": capacity, "accepted_sessions": sessions,
+                "available_slots": max(0, capacity - sessions), "receipts_expire": False,
+                "admission_open": sessions < capacity, "event_count": count, "event_bytes": size,
+                "event_limits": {"per_event_bytes": storage.MAX_EVENT_BYTES,
+                                 "per_session_bytes": storage.MAX_SESSION_EVENT_BYTES,
+                                 "store_bytes": storage.MAX_TOTAL_EVENT_BYTES,
+                                 "per_session_count": MAX_EVENTS, "store_count": MAX_TOTAL_EVENTS},
+                "legacy_store_over_budget": oversized or count > MAX_TOTAL_EVENTS or
+                                            size > storage.MAX_TOTAL_EVENT_BYTES,
+                "file_bytes": files, "physical_disk_bound_verified": False,
+                "maintenance_performed": False}
 
     def _control(self, session_id: str, command: str, text: str = "") -> dict:
         session = self.status(session_id)["session"]

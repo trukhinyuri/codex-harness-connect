@@ -6,8 +6,8 @@ claims and generated artifacts.
 
 | Layer | Actual evidence | Limit |
 | --- | --- | --- |
-| Main regression suite | 291 tests and 74 subtests passed on macOS/Python 3.14.7; 69 affected tests passed after scheduling-independent test corrections; Ruff passed | Synthetic processes/protocol fixtures; separate native acceptance gates remain |
-| Installed runtime | Clean noneditable alpha.4 wheel: all 14 module hashes match source; real stdio MCP wait/reconnect/two-reader/cancellation/scope/explicit event-drain checks passed | One local platform and synthetic child; no additional vendor inference |
+| Main regression suite | 343 tests and 74 subtests passed on macOS/Python 3.14.7; final alpha.5 affected suites passed (85 lifecycle/revalidation/MCP tests and 21 generation/adapter tests); Ruff passed | Synthetic processes/protocol fixtures; separate native acceptance gates remain |
+| Installed runtime | Clean noneditable alpha.5 wheel: all 16 module hashes match source; real stdio MCP capacity/replay/paging/cancellation/durable-outcome-after-eviction/reconnect checks passed | One local platform and synthetic child; no additional vendor inference |
 | Claude native roundtrip | Claude Code 2.1.286: two exact replies, same-ID resume, then original reply recalled after MCP reconnect; empty workspace stayed empty | Three no-tool prompts; no approval/teams/file-edit/UI claim |
 | Claude status parser | Updated parser replayed all three recorded native stdout streams with verified identity/success, zero denials and parent-verification requirement | No new inference; actual native denial/rate-limit cases remain untested |
 | Lifecycle faults | Worker loss, cancellation, SQLite contention, bounded retention, request id recovery and profile isolation tested | Only kernel-observed processes |
@@ -15,7 +15,7 @@ claims and generated artifacts.
 | Grok | Official docs/source, installed 1.0.44 alpha help/inspect; prepared JSON contract | Native effective auth/model route and absence of paid fallback unproven; no inference |
 | GLM | Official supported-tool docs and subscription terms read; profile isolation design | Existing usable profile and this orchestration's use classification unverified; no inference |
 | agy/Hermes | Current Google docs/terms, installed1.2.14 help, pinned Hermes source | Applicable permission unresolved; no inference |
-| Local plugin installation | All five alpha.4 packages updated via installed CLI; cache matches generated packages; fresh stdio catalogs expose 14 router/13 scoped tools; current Desktop chat discovered and invoked wait_sessions in all five scopes on an unavailable ID, plus router revalidate_cli | New API loading/invocation proved; valid synthetic jobs tested in installed stdio, full native UI interactions unverified; UI automation denied access to Codex |
+| Local plugin installation | All five alpha.5 packages updated via installed CLI; 20 cache files match generated packages; fresh stdio catalogs expose 15 router/14 scoped tools. Earlier alpha.4 current-chat wait/revalidate invocation remains verified; immediately after alpha.5 installation this chat still returned the old list schema | Alpha.5 installed stdio proved; current-chat alpha.5 API reload and full native UI interactions unverified. UI automation denied access to Codex |
 | Hosted CI | [Alpha.4 runtime revision](https://github.com/trukhinyuri/codex-harness-connect/actions/runs/36830383639) passed all four macOS/Linux and Python 3.11/3.14 jobs. Check the exact current revision in the [CI runs](https://github.com/trukhinyuri/codex-harness-connect/actions/workflows/ci.yml) | Synthetic CI is not native vendor or Desktop UI qualification |
 
 Local account observations, absolute home paths, conversations and raw CLI readbacks are private and
@@ -46,7 +46,7 @@ through GitHub. All five local packages and their MCP servers were discovered by
 This proves installation/backend discovery; full runtime and Desktop UI acceptance remain separate gates.
 
 Current configured labels are `connect_harness_cli`, `with_claude_cli`, `with_claude_cli_glm`, `with_grok_cli` and
-`with_agy_cli`. The installed alpha.4 manifests/skills match the generator and current host tool metadata uses the router label; the host controls any namespace prefix in its UI.
+`with_agy_cli`. The installed alpha.5 manifests/skills match the generator and current host tool metadata uses the router label; the host controls any namespace prefix in its UI.
 
 Next: unresolved native acceptance/profile/policy/containment/UI gates.
 Preserve the full original objective. See [SQLite lifecycle evidence](sqlite-lifecycle.md).
@@ -87,3 +87,27 @@ See [wait semantics](waiting.md) and [comparative source evidence](quality-roadm
 The [next native interaction contract](native-interaction-contract.md) identifies documented form input,
 provider consent boundaries and required acceptance. No native elicitation/approval broker is enabled
 in alpha.4; documented interfaces are not a successful live UI test.
+
+## Alpha.5 storage boundaries
+
+Permanent admission capacity is checked transactionally after request replay lookup and before Popen.
+Byte-aware event retention keeps exact counters and per-job gap watermarks; final native metadata
+survives event eviction. History reads are compact pages with explicit scoped cursors. Independent
+review found an interrupted-migration counter bug and old-worker INSERT accounting incompatibility;
+both were corrected and specifically rechecked. Public source/package privacy review passed.
+
+The clean installed wheel verified two synthetic jobs, full-capacity replay without a new launch,
+complete two-job pagination, explicit cancellation, empty-workspace preservation, reconnect recovery
+and native outcome after complete event eviction. All five fresh stdio catalogs expose storage_status.
+No vendor inference or existing-history cleanup was used. Each of five immediate installation
+intervals preserved all ten configuration groups outside plugins/marketplaces; earlier reasoning
+drift remains unexplained and was not automatically restored.
+
+Existing stores migrate without deleting history. Already-running old workers retain their old
+count-only limits; oversized legacy history is counted and suppressed on read, with explicit
+over-budget reporting. No unlimited admission, physical disk envelope or full upgrade parity is
+promised. See [storage and recovery](storage.md). Actual local source/runtime SQLite reports 3.53.4;
+the [upstream WAL-reset fix](https://sqlite.org/wal.html) applies since 3.51.3 or documented
+backports. This local observation does not qualify every CI/user Python build. Native approvals/teams,
+provider policy/profile routes, current Desktop UI/API reload, Cloud and full macOS containment remain
+open. The strongest-in-the-world ambition is not a proven comparative ranking.
