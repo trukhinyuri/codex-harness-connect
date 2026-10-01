@@ -5,7 +5,8 @@
 3. Inventory verifies installed executable identity and top-level help/version; help is untrusted evidence.
 4. A launch contract builds an argv vector without a shell and keeps vendor auth/default policies intact.
 5. A detached local worker owns one native process, PTY or pipe, controls and durable event cursors.
-6. Codex consumes bounded event pages and explicit native answers/cancellation. Reconnection never starts
+6. Codex waits on compact cursor summaries, then consumes bounded event pages and explicit native
+   answers/cancellation. Reconnection never starts
    another inference run. External tasks are not misrepresented as native Codex subagent sessions.
 7. Explicit native git worktrees isolate concurrent changes; they do not claim managed Codex attachment.
 

@@ -59,7 +59,11 @@ creating duplicate plugins. Never silently reduce the task to inventory or synth
    Use documented MCP/plugin mechanisms. Experimental app-server plugin/* methods are not a production
    client dependency. Report separately documentation, inference, synthetic tests and native acceptance.
 
-For long-running jobs, start once, retain the returned job id and consume events with cursors. A tool timeout
+For long-running jobs, start once and retain the returned job id and acknowledged event cursor. Use
+wait_sessions for 1..8 known jobs to avoid repeated empty transcript polls. It returns compact change
+metadata without consuming events; drain session_events from the acknowledged cursor before advancing
+it. A wait timeout or cancellation leaves the native jobs running. Request explicit cancel_session and
+verify its final state to stop a job. A tool timeout
 does not prove the child exited. Confirm cancellation with authoritative state. Never automatically retry a
 model request after an uncertain outcome. Choose a fresh 32-character lowercase hex request_id before
 start_session or resume_session; retain it before calling. Use lookup_request after an uncertain response.
@@ -94,7 +98,9 @@ Keep the parent Codex task context and verify relevant AGENTS.md instructions. P
 skill results and user-approved context explicitly in the prompt. Do not read or export hidden memory,
 credentials or settings. Native harness customizations are loaded by that harness itself.
 For native approvals or native team features, use interactive PTY; don't claim print mode supports them.
-Use start_session, then session_events with the returned id/cursor. Keep OS job id and native conversation
+Use start_session once, then wait_sessions with acknowledged cursors and drain session_events when
+changes are available. Waiting never launches/resumes/cancels native jobs and does not consume events.
+Keep OS job id and native conversation
 id separate. Choose and retain a fresh 32-character lowercase hex request_id before launching; recover an
 uncertain response with lookup_request. Never automatically restart a job whose outcome is uncertain.
 Use send_input for explicit user choices, cancel_session to stop and verify its final state, and
@@ -112,7 +118,7 @@ subagents, and child tools have their own permission enforcement. Policy-held ad
         skill_name, body = "connect-harness-cli", RESEARCH_SKILL
     args = ["serve"] + (["--profile", profile] if profile else [])
     manifest = {
-        "name": name, "version": "0.1.0-alpha.3", "description": description,
+        "name": name, "version": "0.1.0-alpha.4", "description": description,
         "skills": "./skills/", "mcpServers": "./.mcp.json",
         "interface": {"displayName": display_name, "shortDescription": "Local CLI delegation",
                       "longDescription": description, "developerName": "Yuri Trukhin",

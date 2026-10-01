@@ -2,14 +2,17 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Annotated
 
 from mcp.server.fastmcp import FastMCP
 from mcp.types import ToolAnnotations
+from pydantic import Field
 
 from .adapters import ADAPTERS, get_adapter, launch_contract
 from .discovery import inventory
 from .revalidation import revalidate
 from .sessions import SessionService
+from .waiting import WaitTarget, wait_for_sessions
 from .worktrees import create_worktree
 
 READ = ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=False)
@@ -25,7 +28,7 @@ def build_server(state_root: Path, profile: str | None = None) -> FastMCP:
     server = FastMCP("codex-harness-connect", log_level="WARNING", instructions=(
         "Local native CLI orchestration. Inventory is not permission or full feature proof. "
         "Use only authorized task context. Keep native permissions; never bypass or change auth. "
-        "Policy-held adapters cannot launch. Start once, poll with cursors; cancel explicitly and "
+        "Policy-held adapters cannot launch. Start once, wait with cursors and drain events; cancel explicitly and "
         "verify terminal state. A failed MCP call does not prove the worker stopped. "
         "Codex memory, sandbox and native subagent UI are not automatically inherited."
     ))
@@ -127,6 +130,30 @@ def build_server(state_root: Path, profile: str | None = None) -> FastMCP:
     def session_events(session_id: str, after: int = 0, limit: int = 100) -> dict:
         """Read live state plus a durable bounded event page; retain next_cursor for reconnect."""
         return owner(session_id).status(session_id, after, limit)
+
+    @server.tool(annotations=READ)
+    async def wait_sessions(
+        targets: list[WaitTarget],
+        timeout_seconds: Annotated[float, Field(strict=True, ge=0, le=45, allow_inf_nan=False)] = 30,
+    ) -> dict:
+        """Wait up to 45s for existing jobs to change; no model launch or job cancellation.
+
+        Supply each acknowledged event cursor. The compact response does not consume events;
+        drain session_events using that cursor before advancing it. Cancelling this wait leaves
+        the native jobs running; stopping a job requires explicit cancel_session and verification.
+        """
+        if not 1 <= len(targets) <= 8:
+            raise ValueError("Wait requires 1..8 existing jobs")
+        services = {}
+
+        def read_status(session_id, after, limit):
+            # Ownership probes are read-only and run inside the wait's thread/deadline,
+            # so a blocked filesystem cannot block the MCP event loop or cancellation.
+            if session_id not in services:
+                services[session_id] = owner(session_id)
+            return services[session_id].status(session_id, after=after, limit=limit)
+
+        return await wait_for_sessions(targets, read_status, timeout_seconds=timeout_seconds)
 
     @server.tool(annotations=READ)
     def list_sessions() -> dict:

@@ -10,7 +10,9 @@ Keep the parent Codex task context and verify relevant AGENTS.md instructions. P
 skill results and user-approved context explicitly in the prompt. Do not read or export hidden memory,
 credentials or settings. Native harness customizations are loaded by that harness itself.
 For native approvals or native team features, use interactive PTY; don't claim print mode supports them.
-Use start_session, then session_events with the returned id/cursor. Keep OS job id and native conversation
+Use start_session once, then wait_sessions with acknowledged cursors and drain session_events when
+changes are available. Waiting never launches/resumes/cancels native jobs and does not consume events.
+Keep OS job id and native conversation
 id separate. Choose and retain a fresh 32-character lowercase hex request_id before launching; recover an
 uncertain response with lookup_request. Never automatically restart a job whose outcome is uncertain.
 Use send_input for explicit user choices, cancel_session to stop and verify its final state, and

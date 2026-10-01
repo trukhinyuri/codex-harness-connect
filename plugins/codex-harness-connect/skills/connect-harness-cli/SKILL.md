@@ -51,7 +51,11 @@ creating duplicate plugins. Never silently reduce the task to inventory or synth
    Use documented MCP/plugin mechanisms. Experimental app-server plugin/* methods are not a production
    client dependency. Report separately documentation, inference, synthetic tests and native acceptance.
 
-For long-running jobs, start once, retain the returned job id and consume events with cursors. A tool timeout
+For long-running jobs, start once and retain the returned job id and acknowledged event cursor. Use
+wait_sessions for 1..8 known jobs to avoid repeated empty transcript polls. It returns compact change
+metadata without consuming events; drain session_events from the acknowledged cursor before advancing
+it. A wait timeout or cancellation leaves the native jobs running. Request explicit cancel_session and
+verify its final state to stop a job. A tool timeout
 does not prove the child exited. Confirm cancellation with authoritative state. Never automatically retry a
 model request after an uncertain outcome. Choose a fresh 32-character lowercase hex request_id before
 start_session or resume_session; retain it before calling. Use lookup_request after an uncertain response.

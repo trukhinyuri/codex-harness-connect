@@ -43,7 +43,7 @@ BUNDLED_CLI_PATHS = ("Contents/Resources/codex-cli/bin/codex",
                      "Contents/Resources/bin/codex", "Contents/MacOS/codex")
 SOURCE_FILES = ("__init__.py", "__main__.py", "adapters.py", "cli.py", "discovery.py", "grok.py", "plugins.py",
                 "protocols.py", "revalidation.py", "server.py", "sessions.py", "worker.py",
-                "worktrees.py")
+                "waiting.py", "worktrees.py")
 DEPENDENCIES = ("mcp", "pydantic", "pydantic-settings", "anyio", "httpx", "httpx-sse",
                 "starlette", "sse-starlette", "uvicorn", "jsonschema", "typing-extensions")
 ACCEPTANCE_GATES = {

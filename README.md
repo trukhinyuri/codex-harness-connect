@@ -10,6 +10,8 @@ Codex remains the parent harness. Plugins delegate authorized tasks to installed
 durable local job state, expose progress and terminal input through MCP, and support explicitly created
 worktrees. A research skill inventories the installed version and requires primary documentation,
 terms review, capability evidence and real acceptance tests before a new harness is labelled ready.
+The [cursor wait tool](docs/waiting.md) observes up to eight existing jobs with compact responses;
+transcripts are read explicitly when events become available.
 
 Requested adapters are Claude Code, Claude Code with GLM Coding Plan, official Grok Build and official
 Antigravity `agy`. These are separate contracts. ZCode's desktop agent is not the Claude executable.
@@ -77,7 +79,9 @@ Synthetic tests validate process lifecycle and MCP contracts without vendor infe
 must separately prove streaming result semantics, approvals/denials, continuation, cancellation,
 connection recovery, concurrent workspaces and Desktop behavior for each installed CLI version.
 See [requirements](docs/requirements.md), [architecture](docs/architecture.md), [status](docs/status.md)
-and the vendor research references. Passing process tests is not proof that a model completed a task.
+and the vendor research references. The [quality priorities](docs/quality-roadmap.md) compare relevant
+source designs and define the next acceptance scenarios. Passing process tests is not proof that a
+model completed a task.
 
 ## Security and privacy
 
